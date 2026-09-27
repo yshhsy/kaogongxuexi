@@ -214,6 +214,26 @@ body {
 
 .ov-item { text-align: center; }
 
+/* ============ 首页打卡条：今日已练 + 连续天数 ============ */
+.punch-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.punch-item { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.punch-item b { font-size: 15px; color: var(--brand); font-weight: 600; }
+.punch-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  overflow: hidden;
+}
+.punch-bar i { display: block; height: 100%; border-radius: 999px; background: var(--brand-grad); transition: width .4s var(--ease); }
+
 .ov-num {
   font-size: 30px;
   font-weight: 600;
@@ -351,6 +371,32 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+/* ============ 随机练习题量选择条 ============ */
+.mix-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mix-pill {
+  flex: 1;
+  text-align: center;
+  padding: 7px 0;
+  font-size: 13px;
+  color: var(--text-2);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  transition: all .2s var(--ease);
+}
+.mix-pill.on {
+  color: #fff;
+  background: var(--brand-grad);
+  border-color: transparent;
+  font-weight: 600;
 }
 
 .side-card {
@@ -1275,6 +1321,7 @@ button:not(:disabled):active { opacity: .78; }
 <span class="hero-slogan">行测申论，稳步上岸</span>
 </div>
 <div class="overview" id="overview"></div>
+<div class="punch-strip" id="punch-strip" hidden></div>
 </section>
 
       <div class="scope-bar" id="scope-bar" hidden>
@@ -1291,9 +1338,14 @@ button:not(:disabled):active { opacity: .78; }
           <span class="side-zi">随</span>
           <span class="side-text">
             <span class="side-title">随机练习</span>
-            <span class="side-sub">五大模块随机抽 10 题</span>
+            <span class="side-sub" id="mixed-sub">五大模块随机抽 10 题</span>
           </span>
         </button>
+        <div class="mix-bar" id="mix-bar">
+          <span class="mix-pill on" id="mix-pill-10">10 题</span>
+          <span class="mix-pill" id="mix-pill-20">20 题</span>
+          <span class="mix-pill" id="mix-pill-30">30 题</span>
+        </div>
         <button class="side-card" id="btn-wrongbook">
           <span class="side-zi zhu">错</span>
           <span class="side-text">
@@ -1465,7 +1517,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.12.0</span><span id="build-stamp">（构建于 2026-09-27 14:28）</span>
+      <br><span id="app-ver">v3.13.0</span><span id="build-stamp">（构建于 2026-09-27 23:29）</span>
     </footer>
   </div>
 
@@ -14275,7 +14327,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       favorites: {},       // qid -> 1（手动收藏）
       notes: {},          // qid -> 用户备注文本
       answeredOrder: [],  // 最近答过的题 id（避免重复出题）
-      examScope: "guokao" // 刷题范围："guokao" | "tianjin"
+      examScope: "guokao", // 刷题范围："guokao" | "tianjin"
+      mixCount: 10         // 随机练习题量：10 | 20 | 30
     };
   }
 
@@ -14459,7 +14512,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.mode = mode;
     session.moduleId = moduleId || null;
     session.from = opts.from || "home";
-    session.queue = mode === "mixed" ? pickQuestions(pool, 10) : pool.slice(); // 列表模式保持列表顺序，可滑动浏览
+    session.queue = mode === "mixed" ? pickQuestions(pool, store.mixCount || 10) : pool.slice(); // 列表模式保持列表顺序，可滑动浏览
     session.index = opts.startIndex || 0;
     if (session.index >= session.queue.length) session.index = 0;
     session.rightCount = 0;
@@ -14719,6 +14772,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("btn-confirm").hidden = true;
     $("btn-peek").hidden = true;
     showNextBtn();
+    // 判卷后自动滚到结果与解析（手机端不必再手动找）
+    setTimeout(function () {
+      var ra = $("result-area");
+      if (ra && !ra.hidden) ra.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
   }
 
   // 申论解析/答案分离：把【参考答案】【参考提纲】小节从解析中抽出，单独成卡
@@ -15050,6 +15108,34 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       item("", pool.length + '<span class="unit">题</span>', "题库总量") +
       item("", done + '<span class="unit">题</span>', "已做题数") +
       item("acc", acc, "总正确率");
+
+    renderPunchStrip();
+  }
+
+  // 首页打卡条：今日已练 + 连续天数（断一天即断签，重新计）
+  function streakDays() {
+    var n = 0;
+    var d = new Date();
+    // 今天还没练：从昨天起算连续（今天不计数，保持激励）；今天已练：从今天起算
+    if (!(store.days[fmtDate(d)] > 0)) d.setDate(d.getDate() - 1);
+    while (store.days[fmtDate(d)] > 0) {
+      n += 1;
+      d.setDate(d.getDate() - 1);
+    }
+    return n;
+  }
+
+  function renderPunchStrip() {
+    var strip = $("punch-strip");
+    if (!strip) return;
+    var n = store.todayCount;
+    var goal = 30;
+    var streak = streakDays();
+    strip.hidden = false;
+    strip.innerHTML =
+      '<span class="punch-item">今日已练 <b>' + n + '</b> 题</span>' +
+      '<span class="punch-bar"><i style="width:' + Math.min(100, Math.round(n * 100 / goal)) + '%"></i></span>' +
+      '<span class="punch-item">连续 <b>' + streak + '</b> 天</span>';
   }
 
   // ---------- 卷目（模块总览） ----------
@@ -15279,6 +15365,26 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     startQuiz(session.mode, session.moduleId);
   });
   $("btn-mixed").addEventListener("click", function () { startQuiz("mixed"); });
+
+  // 随机练习题量选择（10/20/30）
+  function renderMixBar() {
+    var n = store.mixCount || 10;
+    [10, 20, 30].forEach(function (v) {
+      var pill = $("mix-pill-" + v);
+      if (pill) pill.classList.toggle("on", v === n);
+    });
+    var sub = $("mixed-sub");
+    if (sub) sub.textContent = "五大模块随机抽 " + n + " 题";
+  }
+  [10, 20, 30].forEach(function (v) {
+    var pill = $("mix-pill-" + v);
+    if (pill) pill.addEventListener("click", function () {
+      store.mixCount = v;
+      saveStore();
+      renderMixBar();
+    });
+  });
+  renderMixBar();
   $("btn-wrongbook").addEventListener("click", function () {
     showView("wrong");
     renderWrongBook();
