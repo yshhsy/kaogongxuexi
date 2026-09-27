@@ -399,6 +399,63 @@ body {
   font-weight: 600;
 }
 
+/* ============ 每日一练卡 ============ */
+.daily-card {
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: var(--brand-tint);
+  border: 1px solid rgba(15, 169, 104, .25);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--f-sans);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+}
+.daily-card:hover { border-color: rgba(15, 169, 104, .5); transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.daily-zi {
+  font-size: 16px;
+  font-weight: 600;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--brand-grad);
+  border-radius: 10px;
+}
+.daily-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.daily-title-row { display: flex; align-items: center; gap: 8px; }
+.daily-title { font-size: 14px; font-weight: 600; color: var(--brand-deep); }
+.daily-done-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--brand);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.daily-meta { font-size: 12px; color: var(--text-3); }
+.daily-bar {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(15, 169, 104, .15);
+  overflow: hidden;
+}
+.daily-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand-grad);
+  transition: width .35s var(--ease);
+}
+
 .side-card {
   font-family: var(--f-sans);
   font-weight: 400;
@@ -1306,6 +1363,67 @@ body {
 .st-day { font-size: 11px; color: var(--text-3); }
 
 .stats-months { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* ============ 模块掌握度（统计页） ============ */
+.stats-mastery { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mastery-row {
+  font-family: var(--f-sans);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.ma-zi {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg);
+  border-radius: 8px;
+}
+.mastery-row.weak .ma-zi { color: var(--err); background: var(--err-bg); }
+.ma-name { width: 34px; flex: none; font-size: 13px; font-weight: 500; }
+.ma-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.ma-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand-grad);
+  transition: width .35s var(--ease);
+}
+.mastery-row.weak .ma-bar i { background: linear-gradient(135deg, #ff8a5c, #f2542d); }
+.ma-acc { width: 42px; flex: none; text-align: right; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.mastery-row.weak .ma-acc { color: var(--err); }
+.ma-weak {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--err);
+  background: var(--err-bg);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+/* ============ 数据备份（统计页） ============ */
+.backup-tip { margin-top: 12px; font-size: 12.5px; line-height: 1.7; color: var(--text-3); }
+.backup-actions { margin-top: 12px; display: flex; gap: 10px; }
+.backup-actions .ink-btn, .backup-actions .ghost-btn { flex: 1; }
+
 .st-month { display: flex; align-items: center; gap: 10px; }
 .stm-name { font-size: 12px; color: var(--text-2); width: 64px; }
 .stm-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--brand-tint); overflow: hidden; }
@@ -1438,6 +1556,14 @@ button:not(:disabled):active { opacity: .78; }
 </div>
 <div class="overview" id="overview"></div>
 <div class="punch-strip" id="punch-strip" hidden></div>
+<button class="daily-card" id="daily-card" hidden type="button">
+  <span class="daily-zi">每</span>
+  <span class="daily-text">
+    <span class="daily-title-row"><span class="daily-title" id="daily-title">每日一练</span><span class="daily-done-tag" id="daily-done-tag" hidden>已完成</span></span>
+    <span class="daily-meta" id="daily-meta">今日 20 题待打卡</span>
+    <span class="daily-bar"><i id="daily-bar-i" style="width:0%"></i></span>
+  </span>
+</button>
 </section>
 
       <div class="scope-bar" id="scope-bar" hidden>
@@ -1625,6 +1751,7 @@ button:not(:disabled):active { opacity: .78; }
         <h2 class="view-title" id="catalog-title">题目列表</h2>
         <div class="wrong-actions">
           <button id="btn-sl-guide" class="ink-btn alt" hidden>零基础入门指南</button>
+          <button id="btn-cat-recite" class="ghost-btn" hidden>背题模式</button>
           <button id="btn-cat-practice" class="ink-btn">练习全部</button>
         </div>
       </section>
@@ -1646,14 +1773,27 @@ button:not(:disabled):active { opacity: .78; }
         <div class="overview" id="stats-total"></div>
       </section>
       <section class="qian stats-qian">
+        <div class="qian-label">模块掌握度</div>
+        <div class="stats-mastery" id="stats-mastery"></div>
+      </section>
+      <section class="qian stats-qian">
         <div class="qian-label">活跃月份</div>
         <div class="stats-months" id="stats-months"></div>
+      </section>
+      <section class="qian stats-qian">
+        <div class="qian-label">数据备份</div>
+        <div class="backup-tip">本应用为纯本地存储，错题、成绩、打卡都保存在这台手机上。换手机或清理浏览器数据前，先导出备份文件，再到新设备导入即可全部恢复。</div>
+        <div class="backup-actions">
+          <button class="ink-btn" id="btn-export" type="button">导出备份</button>
+          <button class="ghost-btn" id="btn-import" type="button">导入备份</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
       </section>
     </main>
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.15.0</span><span id="build-stamp">（构建于 2026-09-27 23:54）</span>
+      <br><span id="app-ver">v3.16.0</span><span id="build-stamp">（构建于 2026-09-28 00:22）</span>
     </footer>
 
     <!-- app 式底部导航：四页签，当前页高亮 -->
@@ -14472,7 +14612,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       notes: {},          // qid -> 用户备注文本
       answeredOrder: [],  // 最近答过的题 id（避免重复出题）
       examScope: "guokao", // 刷题范围："guokao" | "tianjin"
-      mixCount: 10         // 随机练习题量：10 | 20 | 30
+      mixCount: 10,        // 随机练习题量：10 | 20 | 30
+      dailyDate: "",       // 每日一练当前组卷日期（跨天重置）
+      dailyDone: {}        // 每日一练已答 qid -> 1（今天当轮完成进度）
     };
   }
 
@@ -14518,6 +14660,13 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   if (store.today !== todayStr) {
     store.today = todayStr;
     store.todayCount = 0;
+    saveStore();
+  }
+
+  // 每日一练：跨天重置当日进度
+  if (store.dailyDate !== todayStr) {
+    store.dailyDate = todayStr;
+    store.dailyDone = {};
     saveStore();
   }
 
@@ -14638,6 +14787,48 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     return shuffle(picked).slice(0, count);
   }
 
+  // ---------- 每日一练：按日期+范围种子固定组卷，同一天题目一致，可断点续练 ----------
+  function seededShuffle(arr, seed) {
+    var a = arr.slice();
+    var s = 0;
+    for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
+    for (var j = a.length - 1; j > 0; j--) {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      var k = s % (j + 1);
+      var t = a[j]; a[j] = a[k]; a[k] = t;
+    }
+    return a;
+  }
+
+  function dailyGroup() {
+    var pool = scopedPool().filter(function (q) { return !isShenlun(q); });
+    if (!pool.length) return [];
+    return seededShuffle(pool, todayStr + "|" + scopeExam()).slice(0, Math.min(20, pool.length));
+  }
+
+  // 首页每日一练卡：进度/完成态/重练入口
+  function renderDailyCard() {
+    var card = $("daily-card");
+    if (!card) return;
+    var group = dailyGroup();
+    card.hidden = group.length === 0;
+    if (!group.length) return;
+    var inGroup = {};
+    group.forEach(function (q) { inGroup[q.id] = 1; });
+    var done = 0;
+    Object.keys(store.dailyDone).forEach(function (id) { if (inGroup[id]) done += 1; });
+    var pct = Math.round(done * 100 / group.length);
+    var finished = done >= group.length;
+    $("daily-done-tag").hidden = !finished;
+    $("daily-title").textContent = finished ? "今日一练已完成" : "每日一练";
+    $("daily-meta").textContent = finished
+      ? "已练 " + done + " / " + group.length + " 题 · 点击可再练一轮"
+      : (done > 0
+        ? "今日已完成 " + done + " / " + group.length + " 题，继续冲"
+        : "今日 " + group.length + " 题待打卡");
+    $("daily-bar-i").style.width = pct + "%";
+  }
+
   // ---------- 答题状态 ----------
   var session = {
     queue: [],
@@ -14674,6 +14865,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     } else if (mode === "fav") {
       pool = scopedPool().filter(function (q) { return store.favorites[q.id] && !isShenlun(q); });
       if (pool.length === 0) { toast("收藏本还是空的，做题时点 ☆ 收藏喜欢的题吧"); return; }
+    } else if (mode === "daily") {
+      pool = dailyGroup();
+      if (pool.length === 0) { toast("当前范围暂无可练题目"); return; }
+    } else if (mode === "recite") {
+      pool = scopedPool().filter(function (q) { return q.module === moduleId && !isShenlun(q); });
     } else if (mode === "module") {
       pool = scopedPool().filter(function (q) { return q.module === moduleId; });
     } else {
@@ -14717,6 +14913,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
     var modName = session.mode === "mixed"
       ? "随机练习"
+      : session.mode === "daily" ? "每日一练"
+      : session.mode === "recite" ? "背题 · " + MODULE_SHORT[q.module]
       : (session.mode === "wrong" ? "错题练习" : session.mode === "fav" ? "收藏练习"
       : isShenlun(q) ? "申论学习" : MODULE_SHORT[q.module] + "专项");
     $("quiz-module-tag").textContent = modName;
@@ -14724,7 +14922,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("quiz-progress").textContent = (session.index + 1) + " / " + session.queue.length;
     renderRoundStat();
     $("quiz-timer").textContent = "00:00";
-    $("quiz-timer").hidden = isShenlun(q); // 申论纯学习不计时
+    $("quiz-timer").hidden = isShenlun(q) || session.mode === "recite"; // 申论纯学习/背题不计时
 
     // 易错标记：累计答错 ≥ 2 次
     var risky = store.stats[q.id] && store.stats[q.id].wrong >= 2;
@@ -14801,6 +14999,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("btn-next").hidden = true;
     $("result-area").hidden = true;
     if (sl) shenlunShow(q); // 申论：材料+问题+参考答案同屏展示，自评键直接可用
+    if (!sl && session.mode === "recite") reciteShow(q); // 背题模式：答案高亮+解析直出，不判卷不记账
 
     // 计时
     session.timerStart = Date.now();
@@ -14873,6 +15072,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function recordResult(q, correct) {
     store.todayCount += 1;
     syncToday();
+    if (session.mode === "daily") store.dailyDone[q.id] = 1; // 每日一练进度标记
     if (!store.stats[q.id]) store.stats[q.id] = { right: 0, wrong: 0 };
     if (correct) {
       store.stats[q.id].right += 1;
@@ -15073,6 +15273,28 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("btn-peek").hidden = false;
   }
 
+  // ---------- 背题模式：自动亮答案+解析，不判卷不记账，适合纯记忆型背诵 ----------
+  function reciteShow(q) {
+    session.confirmed = true; // 锁定选项，背题中不可作答
+    var optIdx = q.answer.charCodeAt(0) - 65;
+    Array.prototype.forEach.call($("options").children, function (el, idx) {
+      el.classList.remove("selected");
+      el.classList.add(idx === optIdx ? "correct" : "dim");
+    });
+    showPendingStamp();
+    $("result-meta").innerHTML = '正确答案是 <span class="dai">' + q.answer +
+      '</span> · 背题模式不计成绩 · 记住结论后细看下方解析';
+    renderKnowledgeAndAnalysis(q);
+    $("result-area").hidden = false;
+    $("btn-confirm").hidden = true;
+    $("btn-peek").hidden = true;
+    var nextBtn = $("btn-next");
+    nextBtn.hidden = false;
+    nextBtn.textContent = session.index + 1 < session.queue.length
+      ? "下一题"
+      : "完成，返回题目列表";
+  }
+
   // ---------- 申论：纯学习模式，材料+问题+参考答案同屏，不记账不计成绩 ----------
   function shenlunShow(q) {
     showPendingStamp();
@@ -15089,11 +15311,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function nextQuestion() {
     if (session.index + 1 < session.queue.length) {
       pageTo(1);
-    } else if (isShenlun(session.current)) {
-      // 申论纯学习：练完直接回来源页（题目列表），不出做题报告
+    } else if (isShenlun(session.current) || session.mode === "recite") {
+      // 申论纯学习/背题模式：练完直接回来源页（题目列表），不出做题报告
       clearInterval(session.timerId);
       backToOrigin();
-      toast("申论学习完成");
+      toast(session.mode === "recite" ? "背题完成，记得隔天再测一遍" : "申论学习完成");
     } else {
       clearInterval(session.timerId);
       renderSummary();
@@ -15146,6 +15368,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     stamp.style.animation = "";
 
     var modeName = session.mode === "mixed" ? "随机练习"
+      : session.mode === "daily" ? "每日一练"
       : (session.mode === "wrong" ? "错题练习"
       : session.mode === "fav" ? "收藏练习"
       : MODULE_SHORT[session.moduleId] + "专项练习");
@@ -15200,6 +15423,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function renderHome() {
     renderScopeBar();
     renderOverview();
+    renderDailyCard();
 
     var box = $("module-cards");
     box.innerHTML = "";
@@ -15322,6 +15546,45 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       item("", activeDays + '<span class="unit">天</span>', "活跃天数") +
       item("acc", acc, "总正确率");
 
+    // 模块掌握度：五模块正确率横条（当前考试范围），最低且 <80% 标「薄弱」，点击直达卷目
+    var mBox = $("stats-mastery");
+    if (mBox) {
+      mBox.innerHTML = "";
+      var weakest = null;
+      var rows = [];
+      MODULES.forEach(function (m) {
+        var r = 0, w = 0, attempted = 0;
+        scopedPool().forEach(function (q) {
+          if (q.module !== m.key) return;
+          var s = store.stats[q.id];
+          if (s) { attempted += 1; r += s.right; w += s.wrong; }
+        });
+        var tot = r + w;
+        var acc = tot ? Math.round(r * 100 / tot) : -1;
+        if (acc >= 0 && (!weakest || acc < weakest.acc)) weakest = { key: m.key, acc: acc };
+        rows.push({ zi: m.zi, name: MODULE_SHORT[m.key], key: m.key, acc: acc, attempted: attempted });
+      });
+      rows.forEach(function (row) {
+        var el = document.createElement("button");
+        el.className = "mastery-row" + (row.acc >= 0 && row.acc < 60 ? " weak" : "");
+        el.innerHTML =
+          '<span class="ma-zi">' + row.zi + '</span>' +
+          '<span class="ma-name">' + row.name + '</span>' +
+          '<span class="ma-bar"><i style="width:' + (row.acc < 0 ? 0 : row.acc) + '%"></i></span>' +
+          '<span class="ma-acc">' + (row.acc < 0 ? "未测" : row.acc + "%") + '</span>' +
+          (weakest && row.key === weakest.key && weakest.acc < 80 ? '<span class="ma-weak">薄弱</span>' : '');
+        el.title = row.name + "掌握度 " + (row.acc < 0 ? "未测" : row.acc + "%") + " · 点击查看题目列表";
+        el.addEventListener("click", function () { openCatalog(row.key); });
+        mBox.appendChild(el);
+      });
+      if (!weakest) {
+        var tip = document.createElement("div");
+        tip.className = "empty-tip";
+        tip.textContent = "还没有分模块的做题记录，先去练几题就能看到掌握度";
+        mBox.appendChild(tip);
+      }
+    }
+
     // 活跃月份：每月做题量（小圆点热力风格，简洁列示）
     var months = {};
     Object.keys(store.days).forEach(function (k) {
@@ -15418,6 +15681,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var isSlCat = CAT_MOD === SHENLUN;
     $("btn-cat-practice").textContent = isSlCat ? "顺序学习" : "通练此卷";
     $("btn-sl-guide").hidden = !isSlCat;
+    $("btn-cat-recite").hidden = isSlCat; // 背题模式仅行测卷目可用
     $("catalog-tip").textContent = isSlCat
       ? "共 " + qs.length + " 题 · 纯学习模式：材料、题目与参考答案同屏，不计成绩"
       : "共 " + qs.length + " 题 · 已做 " + done + " 题 · 点击题目从该题开始练习，左右滑动切换";
@@ -15667,6 +15931,62 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   });
   $("btn-cat-practice").addEventListener("click", function () {
     if (CAT_MOD) startQuiz("module", CAT_MOD, { from: "catalog" });
+  });
+  $("btn-cat-recite").addEventListener("click", function () {
+    if (CAT_MOD) startQuiz("recite", CAT_MOD, { from: "catalog" });
+  });
+  $("daily-card").addEventListener("click", function () {
+    startQuiz("daily", null, { from: "home" });
+  });
+
+  // ---------- 数据备份：导出/导入 JSON（纯本地数据，换机前先导出） ----------
+  $("btn-export").addEventListener("click", function () {
+    try {
+      var data = JSON.stringify(store);
+      if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) {
+        toast("备份已生成（" + data.length + " 字节）");
+        return;
+      }
+      var blob = new Blob([data], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "kaogong-backup-" + todayStr + ".json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 400);
+      toast("备份文件已导出，请妥善保存");
+    } catch (e) {
+      toast("导出失败：" + (e && e.message));
+    }
+  });
+  $("btn-import").addEventListener("click", function () { $("import-file").click(); });
+  $("import-file").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var input = this;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var d = JSON.parse(reader.result);
+        if (!d || typeof d !== "object" || !d.days || !d.stats) throw new Error("这不是本应用的备份文件");
+        if (!confirm("导入将覆盖当前全部练习记录（错题/成绩/打卡），确定继续吗？")) { input.value = ""; return; }
+        var base = defaultStore();
+        Object.keys(base).forEach(function (k) {
+          if (d[k] !== undefined) base[k] = d[k];
+        });
+        store = base;
+        if (store.today !== todayStr) { store.today = todayStr; store.todayCount = 0; }
+        if (store.dailyDate !== todayStr) { store.dailyDate = todayStr; store.dailyDone = {}; }
+        saveStore();
+        goHome();
+        toast("备份已导入，全部记录已恢复");
+      } catch (e) {
+        toast("导入失败：" + (e && e.message));
+      }
+      input.value = "";
+    };
+    reader.readAsText(f);
   });
   $("btn-sl-guide").addEventListener("click", function () {
     showView("slguide");
