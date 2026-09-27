@@ -69,7 +69,7 @@ body {
 .paper {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 18px 60px;
+  padding: 0 18px calc(78px + env(safe-area-inset-bottom)); /* 给底部导航留白 */
 }
 
 /* ============ 顶部导航 ============ */
@@ -1210,9 +1210,111 @@ body {
 }
 
 /* ============ 其他 ============ */
+/* ============ app 式底部导航 ============ */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, .92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+}
+.tab-item {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--text-3);
+  transition: color .2s var(--ease);
+}
+.tab-zi {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #f1f3f7;
+  transition: all .2s var(--ease);
+}
+.tab-name { font-size: 10px; }
+.tab-item.on { color: var(--brand); }
+.tab-item.on .tab-zi {
+  color: #fff;
+  background: var(--brand-grad);
+  box-shadow: 0 3px 10px rgba(15, 169, 104, .28);
+}
+.tab-badge {
+  position: absolute;
+  top: 0;
+  right: calc(50% - 22px);
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  color: #fff;
+  background: var(--err);
+  font-weight: 600;
+}
+.tab-badge.fav { background: var(--brand); }
+
+/* ============ 统计页 ============ */
+.stats-qian { margin-bottom: 14px; }
+.stats-week {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  margin-top: 12px;
+  min-height: 120px;
+}
+.st-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.st-num { font-size: 11px; color: var(--text-2); min-height: 14px; }
+.st-bar {
+  width: 100%;
+  flex: 1;
+  max-height: 72px;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--brand-tint);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.st-bar i {
+  display: block;
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--brand-grad);
+  transition: height .4s var(--ease);
+}
+.st-col.zero .st-bar i { background: #dfe3ea; }
+.st-col.today .st-day { color: var(--brand); font-weight: 600; }
+.st-day { font-size: 11px; color: var(--text-3); }
+
+.stats-months { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.st-month { display: flex; align-items: center; gap: 10px; }
+.stm-name { font-size: 12px; color: var(--text-2); width: 64px; }
+.stm-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--brand-tint); overflow: hidden; }
+.stm-bar i { display: block; height: 100%; border-radius: 999px; background: var(--brand-grad); }
+.stm-num { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+
 .colophon {
   margin-top: 44px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  padding-bottom: 0;
   text-align: center;
   font-size: 11px;
   color: var(--text-3);
@@ -1530,10 +1632,37 @@ button:not(:disabled):active { opacity: .78; }
       <div id="catalog-list" class="catalog-list"></div>
     </main>
 
+    <!-- 统计页（每日做题量 + 累计数据，底部导航进入） -->
+    <main id="view-stats" class="view" hidden>
+      <section class="wrong-head">
+        <h2 class="view-title">练习统计</h2>
+      </section>
+      <section class="qian stats-qian">
+        <div class="qian-label">每日做题量</div>
+        <div class="stats-week" id="stats-week"></div>
+      </section>
+      <section class="qian stats-qian">
+        <div class="qian-label">累计数据</div>
+        <div class="overview" id="stats-total"></div>
+      </section>
+      <section class="qian stats-qian">
+        <div class="qian-label">活跃月份</div>
+        <div class="stats-months" id="stats-months"></div>
+      </section>
+    </main>
+
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.14.0</span><span id="build-stamp">（构建于 2026-09-27 23:43）</span>
+      <br><span id="app-ver">v3.15.0</span><span id="build-stamp">（构建于 2026-09-27 23:54）</span>
     </footer>
+
+    <!-- app 式底部导航：四页签，当前页高亮 -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab-item on" id="tab-home"><span class="tab-zi">首</span><span class="tab-badge" id="tab-wrong-badge" hidden>0</span><span class="tab-name">首页</span></button>
+      <button class="tab-item" id="tab-stats"><span class="tab-zi">谱</span><span class="tab-name">统计</span></button>
+      <button class="tab-item" id="tab-wrong"><span class="tab-zi">错</span><span class="tab-badge" id="tab-wrong-b" hidden>0</span><span class="tab-name">错题本</span></button>
+      <button class="tab-item" id="tab-fav"><span class="tab-zi">藏</span><span class="tab-badge fav" id="tab-fav-b" hidden>0</span><span class="tab-name">收藏本</span></button>
+    </nav>
   </div>
 
   <div id="toast" class="toast" hidden></div>
@@ -14405,7 +14534,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     wrong: $("view-wrong"),
     fav: $("view-fav"),
     catalog: $("view-catalog"),
-    slguide: $("view-sl-guide")
+    slguide: $("view-sl-guide"),
+    stats: $("view-stats")
   };
 
   // ---------- 工具 ----------
@@ -14441,7 +14571,34 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
     $("btn-back").hidden = (name === "home");
     $("btn-home").hidden = (name === "home");
+    renderTabbar(name);
     window.scrollTo(0, 0);
+  }
+
+  // ---------- 底部导航 ----------
+  var TAB_MAP = { home: "tab-home", wrong: "tab-wrong", fav: "tab-fav", stats: "tab-stats" };
+
+  function renderTabbar(activeView) {
+    var activeTab = TAB_MAP[activeView] || null;
+    ["tab-home", "tab-stats", "tab-wrong", "tab-fav"].forEach(function (id) {
+      $(id).classList.toggle("on", id === activeTab);
+    });
+    // 导航角标同步（错题/收藏数，当前范围）
+    var ex = scopeExam();
+    var nW = Object.keys(store.wrong).filter(function (id2) {
+      var q = ALL_QUESTIONS.find(function (x) { return x.id === id2; });
+      return q && examOf(q) === ex;
+    }).length;
+    var wBadge = $("tab-wrong-b");
+    wBadge.textContent = nW;
+    wBadge.hidden = nW === 0;
+    var nF = Object.keys(store.favorites || {}).filter(function (id2) {
+      var q = ALL_QUESTIONS.find(function (x) { return x.id === id2; });
+      return q && examOf(q) === ex;
+    }).length;
+    var fBadge = $("tab-fav-b");
+    fBadge.textContent = nF;
+    fBadge.hidden = nF === 0;
   }
 
   // 返回上一级：答题页回进入前的页面；申论指南回申论卷目；其余视图回首页
@@ -15116,6 +15273,80 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     fb.hidden = f === 0;
   }
 
+  // ---------- 统计页：每日做题量 + 累计 ----------
+  var WEEK_LABEL = ["日", "一", "二", "三", "四", "五", "六"];
+
+  function renderStats() {
+    // 近 7 天柱状图（含今天）
+    var week = $("stats-week");
+    week.innerHTML = "";
+    var days = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push(d);
+    }
+    var max = 1;
+    days.forEach(function (d) {
+      var c = store.days[fmtDate(d)] || 0;
+      if (c > max) max = c;
+    });
+    days.forEach(function (d) {
+      var c = store.days[fmtDate(d)] || 0;
+      var col = document.createElement("div");
+      col.className = "st-col" + (c ? "" : " zero") + (fmtDate(d) === todayStr ? " today" : "");
+      col.innerHTML =
+        '<span class="st-num">' + (c || "") + "</span>" +
+        '<span class="st-bar"><i style="height:' + Math.max(4, Math.round(c * 100 / max)) + '%"></i></span>' +
+        '<span class="st-day">' + (fmtDate(d) === todayStr ? "今" : WEEK_LABEL[d.getDay()]) + "</span>";
+      week.appendChild(col);
+    });
+
+    // 累计：历史总做题次数 / 累计天数 / 总正确率（全范围合并，不只当前范围）
+    var totalDone = 0, activeDays = 0, right = 0, wrong = 0;
+    Object.keys(store.days).forEach(function (k) {
+      if (store.days[k] > 0) activeDays += 1;
+      totalDone += store.days[k];
+    });
+    Object.keys(store.stats).forEach(function (id) {
+      right += store.stats[id].right;
+      wrong += store.stats[id].wrong;
+    });
+    var acc = (right + wrong) > 0 ? Math.round(right * 100 / (right + wrong)) + "%" : "—";
+    function item(cls, html, label) {
+      return '<div class="ov-item ' + cls + '"><div class="ov-num">' + html +
+        '</div><div class="ov-label">' + label + "</div></div>";
+    }
+    $("stats-total").innerHTML =
+      item("", totalDone + '<span class="unit">题</span>', "累计练习") +
+      item("", activeDays + '<span class="unit">天</span>', "活跃天数") +
+      item("acc", acc, "总正确率");
+
+    // 活跃月份：每月做题量（小圆点热力风格，简洁列示）
+    var months = {};
+    Object.keys(store.days).forEach(function (k) {
+      if (store.days[k] > 0) {
+        var mk = k.slice(0, 7);
+        months[mk] = (months[mk] || 0) + store.days[k];
+      }
+    });
+    var mBox = $("stats-months");
+    mBox.innerHTML = "";
+    var mk = Object.keys(months).sort();
+    if (!mk.length) {
+      mBox.innerHTML = '<div class="empty-tip">还没有练习记录，去首页做题吧</div>';
+    } else {
+      mk.forEach(function (k) {
+        var row = document.createElement("div");
+        row.className = "st-month";
+        row.innerHTML = '<span class="stm-name">' + k + '</span><span class="stm-bar"><i style="width:' +
+          Math.max(6, Math.round(months[k] * 100 / months[mk[mk.length - 1]])) +
+          '%"></i></span><span class="stm-num">' + months[k] + " 题</span>";
+        mBox.appendChild(row);
+      });
+    }
+  }
+
   function renderOverview() {
     var pool = scopedPool();
     var done = 0, right = 0, wrong = 0;
@@ -15439,6 +15670,27 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   });
   $("btn-sl-guide").addEventListener("click", function () {
     showView("slguide");
+  });
+
+  // 底部导航：四页签直达（答题页中点导航＝先退出本轮）
+  $("tab-home").addEventListener("click", function () {
+    if (!views.quiz.hidden) { quitQuiz(); return; }
+    if (views.home.hidden) goHome();
+  });
+  $("tab-stats").addEventListener("click", function () {
+    if (!views.quiz.hidden) { quitQuiz(); }
+    renderStats();
+    showView("stats");
+  });
+  $("tab-wrong").addEventListener("click", function () {
+    if (!views.quiz.hidden) { quitQuiz(); }
+    renderWrongBook();
+    showView("wrong");
+  });
+  $("tab-fav").addEventListener("click", function () {
+    if (!views.quiz.hidden) { quitQuiz(); }
+    renderFavBook();
+    showView("fav");
   });
   $("btn-clear-wrong").addEventListener("click", function () {
     if (Object.keys(store.wrong).length === 0) { toast("错题本已经是空的"); return; }
