@@ -772,6 +772,19 @@ body {
   text-align: center;
 }
 
+/* 本轮实时统计条 */
+.round-stat {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--brand);
+  text-align: center;
+  animation: fadeUp .25s ease-out;
+}
+
+/* 空态引导富文本 */
+.empty-tip-rich { line-height: 2; padding: 30px 16px; }
+.empty-tip-rich b { color: var(--brand); }
+
 /* ============ 答题结果 ============ */
 .result-area { animation: fadeUp .3s ease-out; }
 
@@ -1107,6 +1120,7 @@ body {
 
 @media (max-width: 640px) {
   .ct-text { font-size: 12px; }
+  .kbd-tip { display: none; } /* 手机无键盘，快捷键提示无意义 */
 }
 
 /* ============ 错题列表 ============ */
@@ -1427,6 +1441,7 @@ button:not(:disabled):active { opacity: .78; }
         </article>
       </div>
 
+      <p class="round-stat" id="round-stat" hidden></p>
       <p class="kbd-tip" id="kbd-tip">快捷键：1-4 / A-D 选择答案 · Enter 提交 / 自评答到了 / 下一题 · ←/→ 切换上下题 · Esc 返回</p>
 
       <!-- 结课小结 -->
@@ -1517,7 +1532,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.13.0</span><span id="build-stamp">（构建于 2026-09-27 23:29）</span>
+      <br><span id="app-ver">v3.14.0</span><span id="build-stamp">（构建于 2026-09-27 23:43）</span>
     </footer>
   </div>
 
@@ -14524,6 +14539,18 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     renderQuestion();
   }
 
+  // 本轮实时统计：随判卷更新，随时看到本轮正确率
+  function renderRoundStat() {
+    var el = $("round-stat");
+    if (!el) return;
+    var done = session.times.length;
+    if (!done) { el.hidden = true; return; }
+    el.hidden = false;
+    var right = session.rightCount;
+    var acc = Math.round(right * 100 / done);
+    el.textContent = "本轮已答 " + done + " · 对 " + right + " · 错 " + (done - right) + " · 正确率 " + acc + "%";
+  }
+
   function renderQuestion() {
     var q = session.queue[session.index];
     session.current = q;
@@ -14538,6 +14565,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("quiz-module-tag").textContent = modName;
     $("quiz-source-tag").textContent = q.source;
     $("quiz-progress").textContent = (session.index + 1) + " / " + session.queue.length;
+    renderRoundStat();
     $("quiz-timer").textContent = "00:00";
     $("quiz-timer").hidden = isShenlun(q); // 申论纯学习不计时
 
@@ -14748,6 +14776,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
     // 记账
     recordResult(q, correct);
+    renderRoundStat();
 
     // 结果状态与说明
     stampResult(correct);
@@ -15220,7 +15249,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     list.innerHTML = "";
     var ids = Object.keys(store.wrong);
     if (ids.length === 0) {
-      list.innerHTML = '<div class="empty-tip">错题本已清空，继续保持！</div>';
+      list.innerHTML = '<div class="empty-tip empty-tip-rich">错题本还是空的。<br>去做几道题，答错的会自动收进这里，连对 3 次自动销账。<br>现在就去 <b>随机练习</b> 热热身？</div>';
       return;
     }
     var ex = scopeExam();
