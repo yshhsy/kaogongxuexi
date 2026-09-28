@@ -1811,7 +1811,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.18.0</span><span id="build-stamp">（构建于 2026-09-28 12:50）</span>
+      <br><span id="app-ver">v3.18.1</span><span id="build-stamp">（构建于 2026-09-28 15:34）</span>
     </footer>
 
     <!-- app 式底部导航：四页签，当前页高亮 -->
@@ -14841,7 +14841,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("daily-done-tag").hidden = !finished;
     $("daily-title").textContent = finished ? "今日一练已完成" : "每日一练";
     $("daily-meta").textContent = finished
-      ? "已练 " + done + " / " + group.length + " 题 · 点击可再练一轮"
+      ? "已练 " + done + " / " + group.length + " 题 · 点击可再过一遍"
       : (done > 0
         ? "今日已完成 " + done + " / " + group.length + " 题，继续冲"
         : "今日 " + group.length + " 题待打卡");
@@ -15020,25 +15020,14 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       optsBox.appendChild(btn);
     });
 
-    // 作答痕迹：非错题本/背题模式，重遇做过的题回显上次选择（选对选错都标）
-    if (!sl && session.mode !== "wrong" && session.mode !== "recite" && store.lastAnswer[q.id]) {
-      var la = store.lastAnswer[q.id];
-      var laIdx = letters.indexOf(la.pick);
-      if (laIdx >= 0 && optsBox.children[laIdx]) {
-        var laBtn = optsBox.children[laIdx];
-        laBtn.classList.add("last-pick");
-        var laTag = document.createElement("span");
-        laTag.className = "last-tag " + (la.correct ? "ok" : "no");
-        laTag.textContent = "上次选 " + la.pick + (la.correct ? " · 答对" : " · 答错");
-        laBtn.appendChild(laTag);
-      }
-    }
-
     // 按钮与结果区
     $("btn-next").hidden = true;
     $("result-area").hidden = true;
     if (sl) shenlunShow(q); // 申论：材料+问题+参考答案同屏展示，自评键直接可用
     if (!sl && session.mode === "recite") reciteShow(q); // 背题模式：答案高亮+解析直出，不判卷不记账
+    if (!sl && session.mode !== "wrong" && session.mode !== "recite" && store.lastAnswer[q.id]) {
+      replayLastAnswer(q); // 作答痕迹：重遇做过的题直接呈现「提交后」的判卷页效果
+    }
 
     // 计时
     session.timerStart = Date.now();
@@ -15136,6 +15125,34 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     store.answeredOrder.push(q.id);
     if (store.answeredOrder.length > 100) store.answeredOrder = store.answeredOrder.slice(-100);
     saveStore();
+  }
+
+  // 重遇做过的题（非错题本入口）：直接呈现上次提交后的页面效果（判卷着色+✓/✗+解析），锁定不重复记账
+  function replayLastAnswer(q) {
+    var la = store.lastAnswer[q.id];
+    var letters = ["A", "B", "C", "D", "E", "F"];
+    var optIdx = q.answer.charCodeAt(0) - 65;
+    var pickIdx = letters.indexOf(la.pick);
+    Array.prototype.forEach.call($("options").children, function (el, idx) {
+      if (idx === optIdx) el.classList.add("correct");
+      else if (idx === pickIdx) el.classList.add("wrong");
+      else el.classList.add("dim");
+    });
+    session.confirmed = true; // 已呈判卷态，选项锁定不可重答（重练走错题本）
+    stampResult(la.correct);
+    var meta = $("result-meta");
+    meta.innerHTML = "";
+    if (la.correct) {
+      meta.innerHTML = '上次作答已选 <span class="dai">' + la.pick + '</span> · 答对了 · 这题已掌握，温习下方解析';
+    } else {
+      meta.innerHTML = '上次作答已选 <span class="zhu">' + la.pick + '</span> · 答错了 · 正确答案是 <span class="dai">' +
+        q.answer + '</span> · 再看一遍解析加深印象';
+    }
+    renderKnowledgeAndAnalysis(q);
+    $("result-area").hidden = false;
+    $("btn-confirm").hidden = true;
+    $("btn-peek").hidden = true;
+    showNextBtn();
   }
 
   function stampResult(correct) {
@@ -15353,11 +15370,13 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function nextQuestion() {
     if (session.index + 1 < session.queue.length) {
       pageTo(1);
-    } else if (isShenlun(session.current) || session.mode === "recite") {
-      // 申论纯学习/背题模式：练完直接回来源页（题目列表），不出做题报告
+    } else if (isShenlun(session.current) || session.mode === "recite" || session.times.length === 0) {
+      // 申论纯学习/背题模式/纯温习（全程只看未重答）：练完直接回来源页，不出做题报告
       clearInterval(session.timerId);
       backToOrigin();
-      toast(session.mode === "recite" ? "背题完成，记得隔天再测一遍" : "申论学习完成");
+      toast(session.mode === "recite" ? "背题完成，记得隔天再测一遍"
+        : isShenlun(session.current) ? "申论学习完成"
+        : "温习完成，错题本里的题记得重练");
     } else {
       clearInterval(session.timerId);
       renderSummary();
