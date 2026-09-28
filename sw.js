@@ -1,5 +1,5 @@
 // 考公学习离线缓存：首次打开缓存全部资源，之后无网可用
-var CACHE = "xingce-quiz-v3.17.0";
+var CACHE = "xingce-quiz-v3.17.1";
 var ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./splash-750x1334.png", "./splash-1125x2436.png", "./splash-1170x2532.png", "./splash-1179x2556.png", "./splash-1284x2778.png", "./splash-1290x2796.png", "./splash-2048x2732.png"];
 
 self.addEventListener("install", function (e) {
