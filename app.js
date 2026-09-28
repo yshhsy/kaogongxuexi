@@ -1764,4 +1764,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     if (q) { startSingle(q, "home"); toast("好友分享的题目，答完点「完成」返回"); }
     else toast("分享的题目不存在或已下线");
   })();
+
+  // PWA 壳进度条钩子：全部题库 + app.js 执行到这里 = 题库就绪（源码版 window 上无此函数，静默跳过）
+  if (typeof window.__bReady === "function") window.__bReady();
 })();
