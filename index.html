@@ -741,6 +741,24 @@ body {
 
 .option.dim { opacity: .45; }
 
+/* ============ 作答痕迹（重遇做过的题回显上次选择） ============ */
+.option.last-pick { border-style: dashed; }
+.last-tag {
+  flex: none;
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: center;
+  background: var(--bg);
+  color: var(--text-3);
+}
+.last-tag.ok { color: var(--ok); background: var(--ok-bg); }
+.last-tag.no { color: var(--err); background: var(--err-bg); }
+
 /* 图形推理（SVG 内联图） */
 .q-figure {
   margin: 4px 0 16px;
@@ -1793,7 +1811,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.17.1</span><span id="build-stamp">（构建于 2026-09-28 12:44）</span>
+      <br><span id="app-ver">v3.18.0</span><span id="build-stamp">（构建于 2026-09-28 12:50）</span>
     </footer>
 
     <!-- app 式底部导航：四页签，当前页高亮 -->
@@ -14614,7 +14632,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       examScope: "guokao", // 刷题范围："guokao" | "tianjin"
       mixCount: 10,        // 随机练习题量：10 | 20 | 30
       dailyDate: "",       // 每日一练当前组卷日期（跨天重置）
-      dailyDone: {}        // 每日一练已答 qid -> 1（今天当轮完成进度）
+      dailyDone: {},       // 每日一练已答 qid -> 1（今天当轮完成进度）
+      lastAnswer: {}       // 作答痕迹：qid -> { pick: "B", correct: true }（重遇题回显上次选择）
     };
   }
 
@@ -15001,6 +15020,20 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       optsBox.appendChild(btn);
     });
 
+    // 作答痕迹：非错题本/背题模式，重遇做过的题回显上次选择（选对选错都标）
+    if (!sl && session.mode !== "wrong" && session.mode !== "recite" && store.lastAnswer[q.id]) {
+      var la = store.lastAnswer[q.id];
+      var laIdx = letters.indexOf(la.pick);
+      if (laIdx >= 0 && optsBox.children[laIdx]) {
+        var laBtn = optsBox.children[laIdx];
+        laBtn.classList.add("last-pick");
+        var laTag = document.createElement("span");
+        laTag.className = "last-tag " + (la.correct ? "ok" : "no");
+        laTag.textContent = "上次选 " + la.pick + (la.correct ? " · 答对" : " · 答错");
+        laBtn.appendChild(laTag);
+      }
+    }
+
     // 按钮与结果区
     $("btn-next").hidden = true;
     $("result-area").hidden = true;
@@ -15079,6 +15112,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     store.todayCount += 1;
     syncToday();
     if (session.mode === "daily") store.dailyDone[q.id] = 1; // 每日一练进度标记
+    store.lastAnswer[q.id] = { pick: ["A", "B", "C", "D", "E", "F"][session.selected], correct: correct }; // 作答痕迹：重遇题回显
     if (!store.stats[q.id]) store.stats[q.id] = { right: 0, wrong: 0 };
     if (correct) {
       store.stats[q.id].right += 1;
@@ -15128,10 +15162,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var correct = userAnswer === q.answer;
     var optIdx = q.answer.charCodeAt(0) - 65;
 
-    // 选项着色
+    // 选项着色（同时清掉旧作答痕迹，按本次作答重新着色）
     var optsBox = $("options");
     Array.prototype.forEach.call(optsBox.children, function (el, idx) {
-      el.classList.remove("selected");
+      el.classList.remove("selected", "last-pick");
+      var oldTag = el.querySelector(".last-tag");
+      if (oldTag && oldTag.remove) oldTag.remove();
       if (idx === optIdx) el.classList.add("correct");
       else if (idx === session.selected) el.classList.add("wrong");
       else el.classList.add("dim");
