@@ -1811,7 +1811,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.18.1</span><span id="build-stamp">（构建于 2026-09-28 15:34）</span>
+      <br><span id="app-ver">v3.18.2</span><span id="build-stamp">（构建于 2026-09-28 15:49）</span>
     </footer>
 
     <!-- app 式底部导航：四页签，当前页高亮 -->
@@ -14735,12 +14735,30 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     toast._t = setTimeout(function () { el.hidden = true; }, 2400);
   }
 
-  function showView(name) {
+  // ---------- 列表页滚动位置记忆（返回时回到上次浏览处，如卷目滑到 80 题返回仍在 80 题） ----------
+  var LIST_VIEWS = ["home", "catalog", "wrong", "fav"];
+  var scrollMemo = {};
+
+  function showView(name, keepScroll) {
+    var cur = null;
+    Object.keys(views).forEach(function (k) { if (views[k].hidden === false) cur = k; });
+    if (cur && LIST_VIEWS.indexOf(cur) >= 0 && typeof window !== "undefined" && window.scrollY) {
+      scrollMemo[cur] = window.scrollY; // 离开列表页前记住浏览位置
+    }
     Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
     $("btn-back").hidden = (name === "home");
     $("btn-home").hidden = (name === "home");
     renderTabbar(name);
-    window.scrollTo(0, 0);
+    var y = (keepScroll && scrollMemo[name]) || 0;
+    if (y > 0 && document.documentElement) {
+      // smooth 滚动会让恢复变成从顶部滑下来的动画，恢复位置需瞬时完成
+      var prev = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, y);
+      document.documentElement.style.scrollBehavior = prev;
+    } else {
+      window.scrollTo(0, 0);
+    }
   }
 
   // ---------- 底部导航 ----------
@@ -14772,8 +14790,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   // 返回上一级：答题页回进入前的页面；申论指南回申论卷目；其余视图回首页
   function goBack() {
     if (!views.quiz.hidden) { backToOrigin(); return; }
-    if (!views.slguide.hidden) { showView("catalog"); return; }
-    goHome();
+    if (!views.slguide.hidden) { showView("catalog", true); return; }
+    goHome(true);
   }
 
   // ---------- 出题策略 ----------
@@ -15389,24 +15407,31 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.from = "home";
     if (from === "catalog" && CAT_MOD) {
       renderCatalog();
-      showView("catalog");
+      showView("catalog", true);
     } else if (from === "wrong") {
       renderWrongBook();
-      showView("wrong");
+      showView("wrong", true);
     } else if (from === "fav") {
       renderFavBook();
-      showView("fav");
+      showView("fav", true);
     } else {
-      goHome();
+      goHome(true);
     }
   }
 
   // ---------- 结课小结 ----------
-  function goHome() {
+  function goHome(keepScroll) {
     clearInterval(session.timerId);
     session.from = "home";
-    showView("home");
+    showView("home", keepScroll);
     renderHome();
+    // renderHome 重渲染在 showView 滚动之后，回首页时再校准一次记忆位置（瞬时，不动画）
+    if (keepScroll && scrollMemo.home && document.documentElement) {
+      var prevB = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, scrollMemo.home);
+      document.documentElement.style.scrollBehavior = prevB;
+    }
   }
 
   function renderSummary() {
