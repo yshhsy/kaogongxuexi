@@ -656,7 +656,17 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   // 富文本渲染：把题库文本里的 "img/xxx.png" 引用替换为 <img> 懒加载，其余安全走 textContent
   // 纯文字题零开销（无引用时直接 textContent 一条路）
+  // 空白标准化：题干挖空常被写成连续空格（HTML 渲染折叠后几乎不可见），统一显示为下划线；
+  // 已有下划线但长短不一的也统一为四段式，视觉一致
+  function blankify(t) {
+    return (t || "")
+      .replace(/[ \u00a0\u3000]{2,}/g, "____")
+      .replace(/_{3,}|＿{2,}/g, "____");
+  }
+  window.__blankify = blankify; // 测试可见
+
   function setRichText(el, text) {
+    text = blankify(text);
     if (!/\bimg\/[\w.\-]+\.(png|jpe?g|gif|webp)\b/i.test(text || "")) {
       el.textContent = text || "";
       return;
@@ -1391,7 +1401,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
           (risky ? '<span class="ct-chip risky">易错</span>' : "") +
           '<span class="ct-seal ' + state + '">' + sealText + "</span>";
         row.querySelector(".ct-text").textContent =
-          q.question.replace(/\s+/g, " ").slice(0, 42) + (q.question.length > 42 ? "……" : "");
+          blankify(q.question).replace(/\s+/g, " ").slice(0, 42) + (q.question.length > 42 ? "……" : "");
         row.title = q.source + " · " + (state === "none" ? "未做" : state === "ok" ? "已答对" : "曾答错");
         row.addEventListener("click", function () {
           var idx = qs.indexOf(q);
@@ -1430,7 +1440,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         "</span></span>" +
         '<button class="wi-rep">重练</button>' +
         '<button class="wi-del" title="移出错题本">✕</button>';
-      item.querySelector(".wi-text").textContent = q.question.replace(/\s+/g, " ").slice(0, 60) + "……";
+      item.querySelector(".wi-text").textContent = blankify(q.question).replace(/\s+/g, " ").slice(0, 60) + "……";
       item.querySelector(".wi-rep").addEventListener("click", function () {
         // 从该错题开始，按错题列表顺序连练
         var pool = scopedPool().filter(function (x) { return store.wrong[x.id]; });
@@ -1471,7 +1481,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         "</span>" +
         '<button class="wi-rep">重练</button>' +
         '<button class="wi-del" title="取消收藏">✕</button>';
-      item.querySelector(".wi-text").textContent = q.question.replace(/\s+/g, " ").slice(0, 60) + "……";
+      item.querySelector(".wi-text").textContent = blankify(q.question).replace(/\s+/g, " ").slice(0, 60) + "……";
       item.querySelector(".wi-rep").addEventListener("click", function () {
         var pool = scopedPool().filter(function (x) { return store.favorites[x.id]; });
         var idx = pool.findIndex(function (x) { return x.id === id; });
@@ -1860,7 +1870,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       var item = document.createElement("button");
       item.type = "button";
       item.className = "search-item";
-      var stem = (q.question || "").replace(/\s+/g, " ").trim();
+      var stem = blankify(q.question || "").replace(/\s+/g, " ").trim();
       if (stem.length > 64) stem = stem.slice(0, 64) + "…";
       var meta = document.createElement("div");
       meta.className = "search-item-stem";
