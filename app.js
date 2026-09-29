@@ -1686,8 +1686,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   // ---------- 新版本提示：SW 更新就绪后引导刷新（首次安装不提示） ----------
   if ("serviceWorker" in navigator) {
     try {
+      // 页面自身版本：从 app.js 的 ?v= 参数取（构建时注入，与 sw.js 的 CACHE 版本一致）
+      var pageVer = "";
+      var appScript = document.querySelector('script[src*="app.js"]');
+      if (appScript && /[?&]v=([^&]+)/.test(appScript.src)) pageVer = RegExp.$1;
       navigator.serviceWorker.getRegistration().then(function (reg) {
-        if (!reg || !navigator.serviceWorker.controller) return;
+        if (!reg) return;
         function showUpdateBar() {
           if (document.querySelector(".update-bar")) return;
           try {
@@ -1698,6 +1702,18 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
             document.body.appendChild(bar);
           } catch (e) {}
         }
+        // 主动向当前控制的 SW 询问版本：page 与 SW 版本不一致 = 有新版本未生效（兜住一切错过时机的情况）
+        function askVersion() {
+          if (!navigator.serviceWorker.controller) return;
+          try { navigator.serviceWorker.controller.postMessage({ type: "GET_VERSION" }); } catch (e) {}
+        }
+        navigator.serviceWorker.addEventListener("message", function (e) {
+          if (e.data && e.data.type === "VERSION" && pageVer && e.data.version !== "xingce-quiz-v" + pageVer) showUpdateBar();
+        });
+        // 新 SW 接管（claim）时重新握手；首次无 controller 时不触发
+        navigator.serviceWorker.addEventListener("controllerchange", function () {
+          if (navigator.serviceWorker.controller) setTimeout(askVersion, 300);
+        });
         if (reg.waiting) showUpdateBar();
         reg.addEventListener("updatefound", function () {
           var w = reg.installing;
@@ -1706,6 +1722,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
             if (w.state === "installed") showUpdateBar();
           });
         });
+        askVersion();
+        try { reg.update(); } catch (e) {} // 立即强制检查更新，不等浏览器节流的周期检查
       });
     } catch (e) {}
   }
