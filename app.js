@@ -90,7 +90,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       dailyDone: {},       // 每日一练已答 qid -> 1（今天当轮完成进度）
       lastAnswer: {},      // 作答痕迹：qid -> { pick: "B", correct: true }（重遇题回显上次选择）
       haptic: true,        // 答题震动反馈（iOS 仅加到主屏幕有效，安卓浏览器多数有效）
-      darkMode: "auto"     // 深色模式："auto" 跟随系统 | "on" | "off"
+      darkMode: "auto",    // 深色模式："auto" 跟随系统 | "on" | "off"
+      fontScale: "md"      // 题干字号："md" 标准 | "lg" 大 | "xl" 特大
     };
   }
 
@@ -1583,6 +1584,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function applyDark() {
     document.documentElement.classList.toggle("dark", darkNow());
   }
+  var FS_LABEL = { md: "标准", lg: "大", xl: "特大" };
+  function applyFont() {
+    var dc = document.documentElement.classList;
+    dc.toggle("fs-lg", store.fontScale === "lg");
+    dc.toggle("fs-xl", store.fontScale === "xl");
+  }
   function renderPrefs() {
     var h = $("tg-haptic"), d = $("tg-dark");
     if (h) {
@@ -1594,6 +1601,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       d.textContent = store.darkMode === "auto" ? "跟随" : (store.darkMode === "on" ? "开" : "关");
       d.setAttribute("aria-pressed", darkNow() ? "true" : "false");
       d.classList.toggle("pref-on", darkNow());
+    }
+    var f = $("tg-font");
+    if (f) {
+      f.textContent = FS_LABEL[store.fontScale] || "标准";
+      f.setAttribute("aria-pressed", store.fontScale !== "md" ? "true" : "false");
+      f.classList.toggle("pref-on", store.fontScale !== "md");
     }
   }
   $("tg-haptic").addEventListener("click", function () {
@@ -1611,8 +1624,17 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     renderPrefs();
     toast(store.darkMode === "auto" ? "深色模式：跟随系统" : (store.darkMode === "on" ? "深色模式：常开" : "深色模式：常关"));
   });
+  $("tg-font").addEventListener("click", function () {
+    // 三档循环：标准 → 大 → 特大 → 标准
+    store.fontScale = store.fontScale === "md" ? "lg" : (store.fontScale === "lg" ? "xl" : "md");
+    saveStore();
+    applyFont();
+    renderPrefs();
+    toast("题干字号：" + (FS_LABEL[store.fontScale] || "标准"));
+  });
   if (mqDark && mqDark.addEventListener) mqDark.addEventListener("change", function () { applyDark(); renderPrefs(); });
   applyDark();
+  applyFont();
   renderPrefs();
 
   // ---------- 数据备份：导出/导入 JSON（纯本地数据，换机前先导出） ----------

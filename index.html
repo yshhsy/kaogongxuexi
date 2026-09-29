@@ -87,6 +87,10 @@ html.dark .tab-zi {
   background: #232938;
 }
 
+/* 题干字号三档：变量驱动，选项同步缩放保持比例 */
+html.fs-lg { --fs-q: 18px; --fs-opt: 17px; }
+html.fs-xl { --fs-q: 20px; --fs-opt: 18px; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 ::selection { background: var(--brand); color: #fff; }
@@ -738,7 +742,7 @@ body {
 .note-card textarea::placeholder { color: #cdbf9e; }
 
 .question-text {
-  font-size: 16px;
+  font-size: var(--fs-q, 16px);
   line-height: 1.85;
   white-space: pre-line;
   margin-bottom: 16px;
@@ -767,7 +771,7 @@ body {
   gap: 12px;
   width: 100%;
   text-align: left;
-  font-size: 15px;
+  font-size: var(--fs-opt, 15px);
   line-height: 1.65;
   background: var(--card);
   border: 1px solid var(--line);
@@ -1538,6 +1542,22 @@ body {
 
 [hidden] { display: none !important; }
 
+/* 手机横屏（矮视口）：压缩垂直装饰，多留内容区 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .masthead { min-height: 42px; padding-top: 5px; padding-bottom: 5px; margin-bottom: 10px; }
+  .masthead-sub { display: none; }
+  .paper { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+  .qian { padding: 14px 16px; }
+  .question-text { line-height: 1.7; margin-bottom: 10px; }
+  .material-body { max-height: 170px; }
+  .tabbar { padding-top: 2px; padding-bottom: calc(2px + env(safe-area-inset-bottom)); }
+  .tab-zi { width: 24px; height: 24px; line-height: 24px; border-radius: 7px; font-size: 12px; }
+  .tab-name { font-size: 9px; }
+  .options { gap: 7px; }
+  .option { padding: 8px 12px; }
+  .qian-label { top: 10px; right: 12px; }
+}
+
 /* ---- PWA 原生化补充：可选文本区域 / 按压反馈 / 输入字号 ---- */
 .question-text,
 .analysis-body,
@@ -1758,7 +1778,7 @@ button:not(:disabled):active { opacity: .78; }
       setTimeout(function () { if (splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 650);
       // 就绪后后台补缓存（SW 已激活则 fetch 经 runtime 写入；HTTP 缓存命中零流量）
       try {
-        var urls = ["data/knowledge.js?v=3.24.0","data/questions-changshi.js?v=3.24.0","data/questions-yanyu.js?v=3.24.0","data/questions-shuliang.js?v=3.24.0","data/questions-panduan.js?v=3.24.0","data/questions-figure-2223.js?v=3.24.0","data/questions-ziliao.js?v=3.24.0","data/questions-2015.js?v=3.24.0","data/questions-2016.js?v=3.24.0","data/questions-2017.js?v=3.24.0","data/questions-2018.js?v=3.24.0","data/questions-2019.js?v=3.24.0","data/questions-2020.js?v=3.24.0","data/questions-2021.js?v=3.24.0","data/questions-2025.js?v=3.24.0","data/questions-2024b.js?v=3.24.0","data/questions-tianjin.js?v=3.24.0","data/questions-tj2021.js?v=3.24.0","data/questions-tj2022.js?v=3.24.0","data/questions-tj2023.js?v=3.24.0","data/questions-tj2024.js?v=3.24.0","data/questions-tj2025b.js?v=3.24.0","data/questions-gk2025b.js?v=3.24.0","data/questions-gk2019-2021b.js?v=3.24.0","data/questions-gk-ziliao-b.js?v=3.24.0","data/questions-shenlun.js?v=3.24.0","data/questions-xz-gk-cs.js?v=3.24.0","data/questions-xz-tj-cs.js?v=3.24.0","data/questions-xz-jl-cs.js?v=3.24.0","data/questions-xz-gk-yy.js?v=3.24.0","data/questions-xz-tj-yy.js?v=3.24.0","data/questions-xz-jl-yy.js?v=3.24.0","data/questions-xz-gk-sl.js?v=3.24.0","data/questions-xz-tj-sl.js?v=3.24.0","data/questions-xz-jl-sl.js?v=3.24.0","data/questions-xz-gk-pd.js?v=3.24.0","data/questions-xz-tj-pd.js?v=3.24.0","data/questions-xz-jl-pd.js?v=3.24.0","data/questions-xz-gk-zl.js?v=3.24.0","data/questions-xz-tj-zl.js?v=3.24.0","data/questions-xz-jl-zl.js?v=3.24.0","data/questions-shenlun-gkfs.js?v=3.24.0","data/questions-shenlun-gkds.js?v=3.24.0","data/questions-shenlun-gkzf.js?v=3.24.0","data/questions-shenlun-tj.js?v=3.24.0","app.js?v=3.24.0"];
+        var urls = ["data/knowledge.js?v=3.25.0","data/questions-changshi.js?v=3.25.0","data/questions-yanyu.js?v=3.25.0","data/questions-shuliang.js?v=3.25.0","data/questions-panduan.js?v=3.25.0","data/questions-figure-2223.js?v=3.25.0","data/questions-ziliao.js?v=3.25.0","data/questions-2015.js?v=3.25.0","data/questions-2016.js?v=3.25.0","data/questions-2017.js?v=3.25.0","data/questions-2018.js?v=3.25.0","data/questions-2019.js?v=3.25.0","data/questions-2020.js?v=3.25.0","data/questions-2021.js?v=3.25.0","data/questions-2025.js?v=3.25.0","data/questions-2024b.js?v=3.25.0","data/questions-tianjin.js?v=3.25.0","data/questions-tj2021.js?v=3.25.0","data/questions-tj2022.js?v=3.25.0","data/questions-tj2023.js?v=3.25.0","data/questions-tj2024.js?v=3.25.0","data/questions-tj2025b.js?v=3.25.0","data/questions-gk2025b.js?v=3.25.0","data/questions-gk2019-2021b.js?v=3.25.0","data/questions-gk-ziliao-b.js?v=3.25.0","data/questions-shenlun.js?v=3.25.0","data/questions-xz-gk-cs.js?v=3.25.0","data/questions-xz-tj-cs.js?v=3.25.0","data/questions-xz-jl-cs.js?v=3.25.0","data/questions-xz-gk-yy.js?v=3.25.0","data/questions-xz-tj-yy.js?v=3.25.0","data/questions-xz-jl-yy.js?v=3.25.0","data/questions-xz-gk-sl.js?v=3.25.0","data/questions-xz-tj-sl.js?v=3.25.0","data/questions-xz-jl-sl.js?v=3.25.0","data/questions-xz-gk-pd.js?v=3.25.0","data/questions-xz-tj-pd.js?v=3.25.0","data/questions-xz-jl-pd.js?v=3.25.0","data/questions-xz-gk-zl.js?v=3.25.0","data/questions-xz-tj-zl.js?v=3.25.0","data/questions-xz-jl-zl.js?v=3.25.0","data/questions-shenlun-gkfs.js?v=3.25.0","data/questions-shenlun-gkds.js?v=3.25.0","data/questions-shenlun-gkzf.js?v=3.25.0","data/questions-shenlun-tj.js?v=3.25.0","app.js?v=3.25.0"];
         setTimeout(function () { urls.forEach(function (u) { fetch(u, { cache: 'default' }).catch(function () {}); }); }, 800);
       } catch (e) {}
     };
@@ -1771,7 +1791,7 @@ button:not(:disabled):active { opacity: .78; }
     <div class="__boot-card">
       <div class="__boot-logo">考</div>
       <div class="__boot-name">考公学习</div>
-      <div class="__boot-ver">v3.24.0</div>
+      <div class="__boot-ver">v3.25.0</div>
       <div class="__boot-track"><div class="__boot-fill" id="__boot-fill"></div></div>
       <div class="__boot-num" id="__boot-num">正在准备题库…</div>
       <div class="__boot-hint">首次加载约需 1-2 分钟（取决于网速）<br>网站不更新只需加载这一次，之后秒开、离线可用</div>
@@ -2043,6 +2063,7 @@ button:not(:disabled):active { opacity: .78; }
         <div class="qian-label">体验偏好</div>
         <div class="pref-row"><span>答题震动反馈</span><button class="pref-toggle" id="tg-haptic" type="button" aria-pressed="false">开</button></div>
         <div class="pref-row"><span>深色模式（跟随系统）</span><button class="pref-toggle" id="tg-dark" type="button" aria-pressed="false">跟随</button></div>
+        <div class="pref-row"><span>题干字号</span><button class="pref-toggle" id="tg-font" type="button" aria-pressed="false">标准</button></div>
       </section>
       <section class="qian stats-qian">
         <div class="qian-label">数据备份</div>
@@ -2057,7 +2078,7 @@ button:not(:disabled):active { opacity: .78; }
 
     <footer class="colophon">
       题目来自历年国家公务员考试真题（考生回忆版），申论参考答案据公开资料整理仅供对照 · 部分解析由 AI 校订补写 · 仅供个人练习
-      <br><span id="app-ver">v3.24.0</span><span id="build-stamp">（构建于 2026-09-29 15:32）</span>
+      <br><span id="app-ver">v3.25.0</span><span id="build-stamp">（构建于 2026-09-29 15:37）</span>
     </footer>
 
     <!-- app 式底部导航：四页签，当前页高亮 -->
@@ -2072,52 +2093,52 @@ button:not(:disabled):active { opacity: .78; }
   <div id="toast" class="toast" hidden></div>
 
   <!-- 题库与知识点 -->
-<script src="data/knowledge.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/knowledge.js')"></script>
-<script src="data/questions-changshi.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-changshi.js')"></script>
-<script src="data/questions-yanyu.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-yanyu.js')"></script>
-<script src="data/questions-shuliang.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shuliang.js')"></script>
-<script src="data/questions-panduan.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-panduan.js')"></script>
-<script src="data/questions-figure-2223.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-figure-2223.js')"></script>
-<script src="data/questions-ziliao.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-ziliao.js')"></script>
-<script src="data/questions-2015.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2015.js')"></script>
-<script src="data/questions-2016.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2016.js')"></script>
-<script src="data/questions-2017.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2017.js')"></script>
-<script src="data/questions-2018.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2018.js')"></script>
-<script src="data/questions-2019.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2019.js')"></script>
-<script src="data/questions-2020.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2020.js')"></script>
-<script src="data/questions-2021.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2021.js')"></script>
-<script src="data/questions-2025.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2025.js')"></script>
-<script src="data/questions-2024b.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2024b.js')"></script>
-<script src="data/questions-tianjin.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tianjin.js')"></script>
-<script src="data/questions-tj2021.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2021.js')"></script>
-<script src="data/questions-tj2022.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2022.js')"></script>
-<script src="data/questions-tj2023.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2023.js')"></script>
-<script src="data/questions-tj2024.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2024.js')"></script>
-<script src="data/questions-tj2025b.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2025b.js')"></script>
-<script src="data/questions-gk2025b.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk2025b.js')"></script>
-<script src="data/questions-gk2019-2021b.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk2019-2021b.js')"></script>
-<script src="data/questions-gk-ziliao-b.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk-ziliao-b.js')"></script>
-<script src="data/questions-shenlun.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun.js')"></script>
-<script src="data/questions-xz-gk-cs.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-cs.js')"></script>
-<script src="data/questions-xz-tj-cs.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-cs.js')"></script>
-<script src="data/questions-xz-jl-cs.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-cs.js')"></script>
-<script src="data/questions-xz-gk-yy.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-yy.js')"></script>
-<script src="data/questions-xz-tj-yy.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-yy.js')"></script>
-<script src="data/questions-xz-jl-yy.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-yy.js')"></script>
-<script src="data/questions-xz-gk-sl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-sl.js')"></script>
-<script src="data/questions-xz-tj-sl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-sl.js')"></script>
-<script src="data/questions-xz-jl-sl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-sl.js')"></script>
-<script src="data/questions-xz-gk-pd.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-pd.js')"></script>
-<script src="data/questions-xz-tj-pd.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-pd.js')"></script>
-<script src="data/questions-xz-jl-pd.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-pd.js')"></script>
-<script src="data/questions-xz-gk-zl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-zl.js')"></script>
-<script src="data/questions-xz-tj-zl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-zl.js')"></script>
-<script src="data/questions-xz-jl-zl.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-zl.js')"></script>
-<script src="data/questions-shenlun-gkfs.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkfs.js')"></script>
-<script src="data/questions-shenlun-gkds.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkds.js')"></script>
-<script src="data/questions-shenlun-gkzf.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkzf.js')"></script>
-<script src="data/questions-shenlun-tj.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-tj.js')"></script>
-<script src="app.js?v=3.24.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('app.js')"></script>
+<script src="data/knowledge.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/knowledge.js')"></script>
+<script src="data/questions-changshi.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-changshi.js')"></script>
+<script src="data/questions-yanyu.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-yanyu.js')"></script>
+<script src="data/questions-shuliang.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shuliang.js')"></script>
+<script src="data/questions-panduan.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-panduan.js')"></script>
+<script src="data/questions-figure-2223.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-figure-2223.js')"></script>
+<script src="data/questions-ziliao.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-ziliao.js')"></script>
+<script src="data/questions-2015.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2015.js')"></script>
+<script src="data/questions-2016.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2016.js')"></script>
+<script src="data/questions-2017.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2017.js')"></script>
+<script src="data/questions-2018.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2018.js')"></script>
+<script src="data/questions-2019.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2019.js')"></script>
+<script src="data/questions-2020.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2020.js')"></script>
+<script src="data/questions-2021.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2021.js')"></script>
+<script src="data/questions-2025.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2025.js')"></script>
+<script src="data/questions-2024b.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-2024b.js')"></script>
+<script src="data/questions-tianjin.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tianjin.js')"></script>
+<script src="data/questions-tj2021.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2021.js')"></script>
+<script src="data/questions-tj2022.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2022.js')"></script>
+<script src="data/questions-tj2023.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2023.js')"></script>
+<script src="data/questions-tj2024.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2024.js')"></script>
+<script src="data/questions-tj2025b.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-tj2025b.js')"></script>
+<script src="data/questions-gk2025b.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk2025b.js')"></script>
+<script src="data/questions-gk2019-2021b.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk2019-2021b.js')"></script>
+<script src="data/questions-gk-ziliao-b.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-gk-ziliao-b.js')"></script>
+<script src="data/questions-shenlun.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun.js')"></script>
+<script src="data/questions-xz-gk-cs.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-cs.js')"></script>
+<script src="data/questions-xz-tj-cs.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-cs.js')"></script>
+<script src="data/questions-xz-jl-cs.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-cs.js')"></script>
+<script src="data/questions-xz-gk-yy.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-yy.js')"></script>
+<script src="data/questions-xz-tj-yy.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-yy.js')"></script>
+<script src="data/questions-xz-jl-yy.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-yy.js')"></script>
+<script src="data/questions-xz-gk-sl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-sl.js')"></script>
+<script src="data/questions-xz-tj-sl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-sl.js')"></script>
+<script src="data/questions-xz-jl-sl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-sl.js')"></script>
+<script src="data/questions-xz-gk-pd.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-pd.js')"></script>
+<script src="data/questions-xz-tj-pd.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-pd.js')"></script>
+<script src="data/questions-xz-jl-pd.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-pd.js')"></script>
+<script src="data/questions-xz-gk-zl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-gk-zl.js')"></script>
+<script src="data/questions-xz-tj-zl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-tj-zl.js')"></script>
+<script src="data/questions-xz-jl-zl.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-xz-jl-zl.js')"></script>
+<script src="data/questions-shenlun-gkfs.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkfs.js')"></script>
+<script src="data/questions-shenlun-gkds.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkds.js')"></script>
+<script src="data/questions-shenlun-gkzf.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-gkzf.js')"></script>
+<script src="data/questions-shenlun-tj.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('data/questions-shenlun-tj.js')"></script>
+<script src="app.js?v=3.25.0" defer onload="window.__bLoad&&window.__bLoad()" onerror="window.__bFail&&window.__bFail('app.js')"></script>
   <script>
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
