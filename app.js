@@ -1671,6 +1671,33 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   applyFont();
   renderPrefs();
 
+  // ---------- 新版本提示：SW 更新就绪后引导刷新（首次安装不提示） ----------
+  if ("serviceWorker" in navigator) {
+    try {
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (!reg || !navigator.serviceWorker.controller) return;
+        function showUpdateBar() {
+          if (document.querySelector(".update-bar")) return;
+          try {
+            var bar = document.createElement("div");
+            bar.className = "update-bar";
+            bar.textContent = "发现新版本，点击刷新";
+            bar.addEventListener("click", function () { location.reload(); });
+            document.body.appendChild(bar);
+          } catch (e) {}
+        }
+        if (reg.waiting) showUpdateBar();
+        reg.addEventListener("updatefound", function () {
+          var w = reg.installing;
+          if (!w) return;
+          w.addEventListener("statechange", function () {
+            if (w.state === "installed") showUpdateBar();
+          });
+        });
+      });
+    } catch (e) {}
+  }
+
   // ---------- 数据备份：导出/导入 JSON（纯本地数据，换机前先导出） ----------
   $("btn-export").addEventListener("click", function () {
     try {
