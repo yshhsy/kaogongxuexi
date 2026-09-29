@@ -507,7 +507,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     }
 
     // 题干与选项（含图形推理 SVG）；申论题无选项，走「查看参考答案」自评流
-    setRichText($("question-text"), q.question);
+    setRichText($("question-text"), blankify(q.question));
     var figBox = $("q-figure");
     figBox.innerHTML = "";
     figBox.hidden = true;
@@ -540,7 +540,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       if (text) {
         var tx = document.createElement("span");
         tx.className = "opt-text";
-        setRichText(tx, text);
+        setRichText(tx, blankify(text));
         body.appendChild(tx);
       }
       btn.addEventListener("click", function () { selectOption(i); });
@@ -656,17 +656,19 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   // 富文本渲染：把题库文本里的 "img/xxx.png" 引用替换为 <img> 懒加载，其余安全走 textContent
   // 纯文字题零开销（无引用时直接 textContent 一条路）
-  // 空白标准化：题干挖空常被写成连续空格（HTML 渲染折叠后几乎不可见），统一显示为下划线；
-  // 已有下划线但长短不一的也统一为四段式，视觉一致
+  // 下划线宽度统一（所有文本安全）：长短不一的既有下划线统一为四段式
+  function undify(t) {
+    return (t || "").replace(/_{3,}|＿{2,}/g, "____");
+  }
+  // 空白标准化（仅题干/选项）：挖空常被写成连续空格（HTML 渲染折叠后几乎不可见），统一显示为下划线。
+  // 不可用于材料/解析/申论答案——那些文本里的连续 NBSP/全角空格是段落缩进，不是挖空
   function blankify(t) {
-    return (t || "")
-      .replace(/[ \u00a0\u3000]{2,}/g, "____")
-      .replace(/_{3,}|＿{2,}/g, "____");
+    return undify((t || "").replace(/[ \u00a0\u3000]{2,}/g, "____"));
   }
   window.__blankify = blankify; // 测试可见
 
   function setRichText(el, text) {
-    text = blankify(text);
+    text = undify(text);
     if (!/\bimg\/[\w.\-]+\.(png|jpe?g|gif|webp)\b/i.test(text || "")) {
       el.textContent = text || "";
       return;
