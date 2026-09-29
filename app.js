@@ -88,7 +88,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       mixCount: 10,        // 随机练习题量：10 | 20 | 30
       dailyDate: "",       // 每日一练当前组卷日期（跨天重置）
       dailyDone: {},       // 每日一练已答 qid -> 1（今天当轮完成进度）
-      lastAnswer: {}       // 作答痕迹：qid -> { pick: "B", correct: true }（重遇题回显上次选择）
+      lastAnswer: {},      // 作答痕迹：qid -> { pick: "B", correct: true }（重遇题回显上次选择）
+      haptic: true,        // 答题震动反馈（iOS 仅加到主屏幕有效，安卓浏览器多数有效）
+      darkMode: "auto"     // 深色模式："auto" 跟随系统 | "on" | "off"
     };
   }
 
@@ -129,6 +131,35 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   }
 
   var store = loadStore();
+
+  // ---------- 震动反馈（V3.24.0 体验打磨）----------
+  function buzz(pattern) {
+    if (!store.haptic) return;
+    try {
+      if (navigator.vibrate) { navigator.vibrate(pattern); return; }
+      // iOS Safari 无 navigator.vibrate：用 AudioContext 毫秒级静音脉冲做触感代理（无声、不干扰）
+      if (window.__buzzAc === undefined) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        window.__buzzAc = AC ? new AC() : null;
+      }
+      if (!window.__buzzAc) return;
+      var ac = window.__buzzAc;
+      if (ac.state === "suspended" && ac.resume) ac.resume();
+      var t = ac.currentTime;
+      pattern.forEach(function (ms) {
+        var osc = ac.createOscillator();
+        var gain = ac.createGain();
+        gain.gain.value = 0.00001; // 近乎无声明，仅供 iOS 震动马达联动判断
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t); osc.stop(t + ms / 1000);
+        t += ms / 1000 + 0.04;
+      });
+    } catch (e) { /* 静默降级：无触感不影响使用 */ }
+  }
+  function buzzJudge(correct, streakNow) {
+    if (correct) buzz(streakNow >= 3 ? [30, 50, 30, 50, 80] : (streakNow >= 2 ? [24, 60, 24] : 18));
+    else buzz([60, 40, 60]);
+  }
   var todayStr = fmtDate(new Date());
 
   if (store.today !== todayStr) {
@@ -385,6 +416,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     }
     session.rightCount = 0;
     session.times = [];
+    session.streak = 0;
 
     if (session.queue.length === 0) { toast("该模块暂时没有题目"); return; }
     showView("quiz");
@@ -401,6 +433,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.index = 0;
     session.rightCount = 0;
     session.times = [];
+    session.streak = 0;
     showView("quiz");
     setQuizChrome(true);
     renderQuestion();
@@ -692,6 +725,10 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var userAnswer = letters[session.selected];
     var correct = userAnswer === q.answer;
     var optIdx = q.answer.charCodeAt(0) - 65;
+
+    // 连对计数（本轮内）：庆祝节奏用，不入库
+    session.streak = correct ? (session.streak || 0) + 1 : 0;
+    buzzJudge(correct, session.streak);
 
     // 选项着色（同时清掉旧作答痕迹，按本次作答重新着色）
     var optsBox = $("options");
@@ -1535,6 +1572,48 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   $("daily-card").addEventListener("click", function () {
     startQuiz("daily", null, { from: "home" });
   });
+
+  // ---------- 体验偏好：震动反馈 / 深色模式（V3.24.0） ----------
+  var mqDark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function darkNow() {
+    if (store.darkMode === "on") return true;
+    if (store.darkMode === "off") return false;
+    return !!(mqDark && mqDark.matches);
+  }
+  function applyDark() {
+    document.documentElement.classList.toggle("dark", darkNow());
+  }
+  function renderPrefs() {
+    var h = $("tg-haptic"), d = $("tg-dark");
+    if (h) {
+      h.textContent = store.haptic ? "开" : "关";
+      h.setAttribute("aria-pressed", store.haptic ? "true" : "false");
+      h.classList.toggle("pref-on", store.haptic);
+    }
+    if (d) {
+      d.textContent = store.darkMode === "auto" ? "跟随" : (store.darkMode === "on" ? "开" : "关");
+      d.setAttribute("aria-pressed", darkNow() ? "true" : "false");
+      d.classList.toggle("pref-on", darkNow());
+    }
+  }
+  $("tg-haptic").addEventListener("click", function () {
+    store.haptic = !store.haptic;
+    saveStore();
+    renderPrefs();
+    if (store.haptic) buzz(20);
+    toast(store.haptic ? "震动反馈已开启" : "震动反馈已关闭");
+  });
+  $("tg-dark").addEventListener("click", function () {
+    // 三态循环：跟随 → 开 → 关 → 跟随
+    store.darkMode = store.darkMode === "auto" ? "on" : (store.darkMode === "on" ? "off" : "auto");
+    saveStore();
+    applyDark();
+    renderPrefs();
+    toast(store.darkMode === "auto" ? "深色模式：跟随系统" : (store.darkMode === "on" ? "深色模式：常开" : "深色模式：常关"));
+  });
+  if (mqDark && mqDark.addEventListener) mqDark.addEventListener("change", function () { applyDark(); renderPrefs(); });
+  applyDark();
+  renderPrefs();
 
   // ---------- 数据备份：导出/导入 JSON（纯本地数据，换机前先导出） ----------
   $("btn-export").addEventListener("click", function () {
