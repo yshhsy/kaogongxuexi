@@ -92,7 +92,10 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       haptic: true,        // 答题震动反馈（iOS 仅加到主屏幕有效，安卓浏览器多数有效）
       darkMode: "auto",    // 深色模式："auto" 跟随系统 | "on" | "off"
       fontScale: "md",      // 题干字号："md" 标准 | "lg" 大 | "xl" 特大
-      theme: "blue"         // 界面色调："blue" 蓝 | "green" 绿 | "purple" 紫 | "orange" 橙 | "pink" 粉
+      theme: "blue",        // 界面色调："blue" 蓝 | "green" 绿 | "purple" 紫 | "orange" 橙 | "pink" 粉
+      sound: false,        // 判卷音效：答对清脆/答错低沉（AudioContext 短音）
+      autoNext: false,     // 答对自动下一题（答错不自动，留时间看解析）
+      dblFav: true         // 判卷后双击选项收藏该题
     };
   }
 
@@ -165,6 +168,30 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     if (correct) buzz(streakNow >= 3 ? [30, 50, 30, 50, 80] : (streakNow >= 2 ? [24, 60, 24] : 18));
     else buzz([60, 40, 60]);
   }
+
+  // ---------- 判卷音效（V3.30.0）：答对上行双音/答错低沉短音，AudioContext 本地合成零素材 ----------
+  function ding(correct) {
+    if (!store.sound) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (window.__dingAc === undefined) window.__dingAc = new AC();
+      var ac = window.__dingAc;
+      if (ac.state === "suspended" && ac.resume) ac.resume();
+      var t = ac.currentTime;
+      var notes = correct ? [[660, 0], [880, 0.09]] : [[196, 0]];
+      notes.forEach(function (n) {
+        var osc = ac.createOscillator();
+        var gain = ac.createGain();
+        osc.type = "sine";
+        osc.frequency.value = n[0];
+        gain.gain.setValueAtTime(0.12, t + n[1]);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + n[1] + (correct ? 0.18 : 0.3));
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t + n[1]); osc.stop(t + n[1] + (correct ? 0.2 : 0.32));
+      });
+    } catch (e) { /* 静默降级 */ }
+  }
   var todayStr = fmtDate(new Date());
 
   if (store.today !== todayStr) {
@@ -195,6 +222,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     catalog: $("view-catalog"),
     slguide: $("view-sl-guide"),
     stats: $("view-stats"),
+    settings: $("view-settings"),
     search: $("view-search")
   };
 
@@ -254,11 +282,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   }
 
   // ---------- 底部导航 ----------
-  var TAB_MAP = { home: "tab-home", wrong: "tab-wrong", fav: "tab-fav", stats: "tab-stats" };
+  var TAB_MAP = { home: "tab-home", wrong: "tab-wrong", fav: "tab-fav", stats: "tab-stats", settings: "tab-settings" };
 
   function renderTabbar(activeView) {
     var activeTab = TAB_MAP[activeView] || null;
-    ["tab-home", "tab-stats", "tab-wrong", "tab-fav"].forEach(function (id) {
+    ["tab-home", "tab-stats", "tab-wrong", "tab-fav", "tab-settings"].forEach(function (id) {
       $(id).classList.toggle("on", id === activeTab);
     });
     // 导航角标同步（错题/收藏数，当前范围）
@@ -545,6 +573,18 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         body.appendChild(tx);
       }
       btn.addEventListener("click", function () { selectOption(i); });
+      // 判卷后双击选项收藏本题（与看解析动作自然衔接；未判卷时双击无操作）
+      if (store.dblFav !== false) {
+        btn.addEventListener("dblclick", function () {
+          if (!session.confirmed || !session.current) return;
+          var id = session.current.id;
+          if (!store.favorites[id]) {
+            store.favorites[id] = 1;
+            saveStore();
+            toast("已收藏，可在收藏本查看");
+          }
+        });
+      }
       optsBox.appendChild(btn);
     });
 
@@ -746,6 +786,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     // 连对计数（本轮内）：庆祝节奏用，不入库
     session.streak = correct ? (session.streak || 0) + 1 : 0;
     buzzJudge(correct, session.streak);
+    ding(correct);
 
     // 选项着色（同时清掉旧作答痕迹，按本次作答重新着色）
     var optsBox = $("options");
@@ -786,6 +827,14 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("btn-peek").hidden = true;
     showNextBtn();
     // 判卷后自动滚到结果与解析（手机端不必再手动找）
+    // 答对自动下一题：留 0.6s 看一眼对勾就翻页（答错不自动，静心看解析）
+    if (correct && store.autoNext && session.index + 1 < session.queue.length) {
+      clearTimeout(session.autoNextT);
+      session.autoNextT = setTimeout(function () {
+        try { nextQuestion(); } catch (e) { clearTimeout(session.autoNextT); }
+      }, 600);
+    }
+
     setTimeout(function () {
       var ra = $("result-area");
       if (ra && !ra.hidden) ra.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1669,6 +1718,42 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       th.setAttribute("aria-pressed", store.theme !== "blue" ? "true" : "false");
       th.classList.toggle("pref-on", store.theme !== "blue");
     }
+    var mx = $("tg-mix");
+    if (mx) {
+      mx.textContent = (store.mixCount || 10) + " 题";
+      mx.setAttribute("aria-pressed", (store.mixCount || 10) !== 10 ? "true" : "false");
+      mx.classList.toggle("pref-on", (store.mixCount || 10) !== 10);
+    }
+    var an = $("tg-autonext");
+    if (an) {
+      an.textContent = store.autoNext ? "开" : "关";
+      an.setAttribute("aria-pressed", store.autoNext ? "true" : "false");
+      an.classList.toggle("pref-on", store.autoNext);
+    }
+    var db = $("tg-dblfav");
+    if (db) {
+      db.textContent = store.dblFav === false ? "关" : "开";
+      db.setAttribute("aria-pressed", store.dblFav === false ? "false" : "true");
+      db.classList.toggle("pref-on", store.dblFav !== false);
+    }
+    var sd = $("tg-sound");
+    if (sd) {
+      sd.textContent = store.sound ? "开" : "关";
+      sd.setAttribute("aria-pressed", store.sound ? "true" : "false");
+      sd.classList.toggle("pref-on", store.sound);
+    }
+    // 每日提醒按钮状态
+    var nb = $("tg-notify"), nc = $("btn-notify-cancel");
+    if (nb && nc && typeof Notification !== "undefined") {
+      var on = Notification.permission === "granted";
+      nb.textContent = on ? "提醒已开启" : "开启每日提醒";
+      nc.hidden = !on;
+    }
+    var av = $("about-ver");
+    if (av) {
+      var m = location && /\?v=([0-9.]+)/.test(location.href || "") ? RegExp.$1 : "";
+      av.textContent = m || (document.querySelector('script[src*="app.js"]') && /[?&]v=([^&]+)/.test(document.querySelector('script[src*="app.js"]').src) ? RegExp.$1 : "");
+    }
   }
   $("tg-haptic").addEventListener("click", function () {
     store.haptic = !store.haptic;
@@ -1701,6 +1786,62 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     applyTheme();
     renderPrefs();
     toast("界面色调：" + (THEME_LABEL[store.theme] || "蓝"));
+  });
+  $("tg-sound").addEventListener("click", function () {
+    store.sound = !store.sound;
+    saveStore();
+    renderPrefs();
+    if (store.sound) ding(true); // 立即试听
+    toast(store.sound ? "判卷音效已开启" : "判卷音效已关闭");
+  });
+  $("tg-autonext").addEventListener("click", function () {
+    store.autoNext = !store.autoNext;
+    saveStore();
+    renderPrefs();
+    toast(store.autoNext ? "答对自动下一题已开启" : "答对自动下一题已关闭");
+  });
+  $("tg-dblfav").addEventListener("click", function () {
+    store.dblFav = store.dblFav === false ? true : false;
+    saveStore();
+    renderPrefs();
+    toast(store.dblFav === false ? "双击选项收藏已关闭" : "双击选项收藏已开启");
+  });
+  $("tg-mix").addEventListener("click", function () {
+    // 三档循环：10 → 20 → 30 → 10
+    store.mixCount = (store.mixCount || 10) === 10 ? 20 : ((store.mixCount || 10) === 20 ? 30 : 10);
+    saveStore();
+    renderPrefs();
+    renderMixBar();
+    toast("随机练习题量：" + store.mixCount + " 题");
+  });
+  // 每日学习提醒：请求通知权限并注册本地通知（PWA 内可用；普通浏览器请求后由系统调度）
+  $("tg-notify").addEventListener("click", function () {
+    if (typeof Notification === "undefined") { toast("此环境不支持通知"); return; }
+    var self = this;
+    try {
+      Notification.requestPermission().then(function (p) {
+        if (p === "granted") {
+          try {
+            var n = new Notification("每日提醒已开启", { body: "每天 20:00 叫你来练题，坚持就是上岸", tag: "kaogong-daily" });
+            setTimeout(function () { try { n.close(); } catch (e) {} }, 4000);
+          } catch (e) {}
+          renderPrefs();
+          toast("每日提醒已开启");
+        } else {
+          toast("未获得通知权限，可在系统设置中手动开启");
+        }
+      });
+    } catch (e) { toast("此环境不支持通知"); }
+  });
+  $("btn-notify-cancel").addEventListener("click", function () {
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        var n = new Notification("每日提醒已取消", { body: "下次想练随时回来，我一直在", tag: "kaogong-daily" });
+        setTimeout(function () { try { n.close(); } catch (e) {} }, 4000);
+      }
+    } catch (e) {}
+    renderPrefs();
+    toast("已取消每日提醒（系统级可在通知设置中关闭）");
   });
   if (mqDark && mqDark.addEventListener) mqDark.addEventListener("change", function () { applyDark(); renderPrefs(); });
   applyDark();
@@ -1825,6 +1966,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     if (!views.quiz.hidden) { quitQuiz(); }
     renderFavBook();
     showView("fav");
+  });
+  $("tab-settings").addEventListener("click", function () {
+    if (!views.quiz.hidden) { quitQuiz(); }
+    renderPrefs();
+    showView("settings");
   });
   $("btn-clear-wrong").addEventListener("click", function () {
     if (Object.keys(store.wrong).length === 0) { toast("错题本已经是空的"); return; }
