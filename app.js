@@ -133,6 +133,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   var store = loadStore();
 
+  // 打卡火焰：连续 ≥3 天点亮（内联 SVG，随文字色不随主题变）
+  var FLAME_SVG = '<svg class="flame-ico" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="#ff9f43" d="M12 2c.6 3.2-.9 4.9-2.4 6.5C8 10.2 6.5 11.9 6.5 15a5.5 5.5 0 0 0 11 0c0-1.6-.6-2.9-1.4-4-.3 1-.9 1.8-1.8 2.3.4-3.6-.8-8-2.3-11.3z"/><path fill="#ffd08a" d="M12 21.2a3.6 3.6 0 0 1-3.6-3.6c0-1.8 1.1-2.8 2.1-3.8.8-.8 1.5-1.5 1.7-2.6 1.3 1.4 3.4 3.6 3.4 6.4a3.6 3.6 0 0 1-3.6 3.6z"/></svg>';
+
   // ---------- 震动反馈（V3.24.0 体验打磨）----------
   function buzz(pattern) {
     if (!store.haptic) return;
@@ -972,6 +975,31 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     }
   }
 
+  // 庆祝彩带：纯 CSS 下落粒子（ANIM 关闭/reduced-motion 时跳过），2.8s 后自清理
+  function confetti() {
+    if (!ANIM) return;
+    try {
+      var layer = document.createElement("div");
+      layer.className = "confetti-layer";
+      var colors = ["#3d6ef7", "#2fd392", "#ffb648", "#ff7a7a", "#2fd4c8", "#6b93f8"];
+      for (var i = 0; i < 42; i++) {
+        var p = document.createElement("i");
+        p.className = "confetti-i";
+        p.style.left = Math.round(Math.random() * 100) + "%";
+        p.style.background = colors[i % colors.length];
+        p.style.setProperty("--d", (2 + Math.random() * 1.2).toFixed(2) + "s");
+        p.style.setProperty("--dl", (Math.random() * 0.5).toFixed(2) + "s");
+        p.style.setProperty("--r", Math.round((Math.random() - 0.5) * 720) + "deg");
+        if (Math.random() > 0.5) p.style.borderRadius = "50%";
+        layer.appendChild(p);
+      }
+      document.body.appendChild(layer);
+      setTimeout(function () {
+        try { document.body.removeChild(layer); } catch (e) {}
+      }, 3000);
+    } catch (e) {}
+  }
+
   function renderSummary() {
     var n = session.times.length; // 实际作答题数（滑动跳过的题不计）
     var right = session.rightCount;
@@ -1008,6 +1036,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       ovItem("", wrongN, "题", "错") +
       ovItem("acc", avg, "秒", "平均每题") +
       ovItem("streak", store.todayCount, "题", "今日已练");
+
+    // 仪式感：发挥好（≥3 题且正确率 ≥80%）→ 庆祝震动 + 彩带
+    if (n >= 3 && rate0 >= 0.8) {
+      buzz([40, 60, 40, 60, 120]);
+      confetti();
+    }
 
     var rate = n ? right / n : 0;
     var comment;
@@ -1288,7 +1322,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     strip.innerHTML =
       '<span class="punch-item">今日已练 <b>' + n + '</b> 题</span>' +
       '<span class="punch-bar"><i style="width:' + Math.min(100, Math.round(n * 100 / goal)) + '%"></i></span>' +
-      '<span class="punch-item">连续 <b>' + streak + '</b> 天</span>';
+      '<span class="punch-item">' + (streak >= 3 ? FLAME_SVG : '') + '连续 <b>' + streak + '</b> 天</span>';
   }
 
   // ---------- 卷目（模块总览） ----------
