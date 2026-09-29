@@ -91,7 +91,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       lastAnswer: {},      // 作答痕迹：qid -> { pick: "B", correct: true }（重遇题回显上次选择）
       haptic: true,        // 答题震动反馈（iOS 仅加到主屏幕有效，安卓浏览器多数有效）
       darkMode: "auto",    // 深色模式："auto" 跟随系统 | "on" | "off"
-      fontScale: "md"      // 题干字号："md" 标准 | "lg" 大 | "xl" 特大
+      fontScale: "md",      // 题干字号："md" 标准 | "lg" 大 | "xl" 特大
+      theme: "blue"         // 界面色调："blue" 蓝 | "green" 绿 | "purple" 紫 | "orange" 橙 | "pink" 粉
     };
   }
 
@@ -1631,6 +1632,14 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     document.documentElement.classList.toggle("dark", darkNow());
   }
   var FS_LABEL = { md: "标准", lg: "大", xl: "特大" };
+  var THEME_ORDER = ["blue", "green", "purple", "orange", "pink"];
+  var THEME_LABEL = { blue: "蓝", green: "绿", purple: "紫", orange: "橙", pink: "粉" };
+  function applyTheme() {
+    var dc = document.documentElement.classList;
+    THEME_ORDER.forEach(function (t) {
+      if (t !== "blue") dc.toggle("t-" + t, store.theme === t);
+    });
+  }
   function applyFont() {
     var dc = document.documentElement.classList;
     dc.toggle("fs-lg", store.fontScale === "lg");
@@ -1653,6 +1662,12 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       f.textContent = FS_LABEL[store.fontScale] || "标准";
       f.setAttribute("aria-pressed", store.fontScale !== "md" ? "true" : "false");
       f.classList.toggle("pref-on", store.fontScale !== "md");
+    }
+    var th = $("tg-theme");
+    if (th) {
+      th.textContent = THEME_LABEL[store.theme] || "蓝";
+      th.setAttribute("aria-pressed", store.theme !== "blue" ? "true" : "false");
+      th.classList.toggle("pref-on", store.theme !== "blue");
     }
   }
   $("tg-haptic").addEventListener("click", function () {
@@ -1678,9 +1693,19 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     renderPrefs();
     toast("题干字号：" + (FS_LABEL[store.fontScale] || "标准"));
   });
+  $("tg-theme").addEventListener("click", function () {
+    // 五色循环：蓝 → 绿 → 紫 → 橙 → 粉 → 蓝
+    var i = THEME_ORDER.indexOf(store.theme);
+    store.theme = THEME_ORDER[(i + 1) % THEME_ORDER.length] || "blue";
+    saveStore();
+    applyTheme();
+    renderPrefs();
+    toast("界面色调：" + (THEME_LABEL[store.theme] || "蓝"));
+  });
   if (mqDark && mqDark.addEventListener) mqDark.addEventListener("change", function () { applyDark(); renderPrefs(); });
   applyDark();
   applyFont();
+  applyTheme();
   renderPrefs();
 
   // ---------- 新版本提示：SW 更新就绪后引导刷新（首次安装不提示） ----------

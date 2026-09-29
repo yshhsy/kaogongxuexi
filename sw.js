@@ -1,6 +1,6 @@
 // 考公学习离线缓存：安装只缓存小壳（秒装）；题库/app.js 随页面加载经 fetch handler 运行时缓存，
 // 页面就绪后再后台补缓存漏网文件——首访零双重下载（v3.22.1 前安装期抢带宽导致题库加载不动）
-var CACHE = "xingce-quiz-v3.28.3";
+var CACHE = "xingce-quiz-v3.29.0";
 var ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./splash-750x1334.png", "./splash-1125x2436.png", "./splash-1170x2532.png", "./splash-1179x2556.png", "./splash-1284x2778.png", "./splash-1290x2796.png", "./splash-2048x2732.png"];
 
 self.addEventListener("install", function (e) {
