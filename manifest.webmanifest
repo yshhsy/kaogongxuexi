@@ -3,9 +3,10 @@
   "short_name": "考公学习uu版",
   "description": "历年国考真题 · 行测 + 申论 · 错题巩固（单机离线版）",
   "start_url": "./index.html",
+  "id": "./",
+  "lang": "zh-CN",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f6f7f9",
   "theme_color": "#3d6ef7",
   "icons": [

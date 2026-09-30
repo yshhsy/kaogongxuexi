@@ -3,9 +3,6 @@
 // 错题自动收录、答对即移出、隔期优先重出 · localStorage 持久化（兼容迁移 v1）
 // V3.5：新增申论模块（主观题自评：材料+问题+参考答案，对照自评「答到了/没答到」计分）
 
-// PWA 原生化：禁掉 iOS 双指捏合缩放（gesturestart 仅 iOS 触发，其他平台无此事件）
-document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
-
 (function () {
   "use strict";
 
@@ -262,6 +259,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function showView(name, keepScroll) {
     var cur = null;
     Object.keys(views).forEach(function (k) { if (views[k].hidden === false) cur = k; });
+    var moveFocus = cur && views[cur].contains && views[cur].contains(document.activeElement);
     if (cur && LIST_VIEWS.indexOf(cur) >= 0 && typeof window !== "undefined" && window.scrollY) {
       scrollMemo[cur] = window.scrollY; // 离开列表页前记住浏览位置
     }
@@ -279,6 +277,14 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     } else {
       window.scrollTo(0, 0);
     }
+    if (moveFocus) {
+      var target = views[name].querySelector(".view-title") ||
+        (name === "quiz" ? $("quiz-head") : views[name]);
+      if (target && target.focus) {
+        target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: true });
+      }
+    }
   }
 
   // ---------- 底部导航 ----------
@@ -288,6 +294,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var activeTab = TAB_MAP[activeView] || null;
     ["tab-home", "tab-stats", "tab-wrong", "tab-fav", "tab-settings"].forEach(function (id) {
       $(id).classList.toggle("on", id === activeTab);
+      $(id).setAttribute("aria-current", id === activeTab ? "page" : "false");
     });
     // 导航角标同步（错题/收藏数，当前范围）
     var ex = scopeExam();
@@ -380,7 +387,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("daily-done-tag").hidden = !finished;
     $("daily-title").textContent = finished ? "今日一练已完成" : "每日一练";
     $("daily-meta").textContent = finished
-      ? "已练 " + done + " / " + group.length + " 题 · 点击可再过一遍"
+      ? "已练 " + done + " / " + group.length + " 题 · 点击回看解析"
       : (done > 0
         ? "今日已完成 " + done + " / " + group.length + " 题，继续冲"
         : "今日 " + group.length + " 题待打卡");
@@ -453,6 +460,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     }
     session.rightCount = 0;
     session.times = [];
+    session.answeredThisRound = {};
     session.streak = 0;
 
     if (session.queue.length === 0) { toast("该模块暂时没有题目"); return; }
@@ -470,6 +478,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.index = 0;
     session.rightCount = 0;
     session.times = [];
+    session.answeredThisRound = {};
     session.streak = 0;
     showView("quiz");
     setQuizChrome(true);
@@ -524,6 +533,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var favBtn = $("btn-fav");
     favBtn.textContent = fav ? "★" : "☆";
     favBtn.classList.toggle("on", fav);
+    favBtn.setAttribute("aria-pressed", fav ? "true" : "false");
+    favBtn.setAttribute("aria-label", fav ? "取消收藏本题" : "收藏本题");
 
     // 个人备注
     $("note-input").value = store.notes[q.id] || "";
@@ -535,6 +546,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       setRichText($("material-body"), ALL_MATERIALS[q.materialId] || "");
       $("material-body").classList.remove("collapsed");
       $("btn-toggle-material").textContent = "收起";
+      $("btn-toggle-material").setAttribute("aria-expanded", "true");
     } else {
       matCard.hidden = true;
     }
@@ -561,6 +573,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var optFigs = q.optionFigures || [];
     (q.options || []).forEach(function (text, i) {
       var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("aria-pressed", "false");
       btn.className = "option" + (optFigs[i] ? " has-figure" : "");
       btn.innerHTML = '<span class="opt-key">' + letters[i] + '</span><span class="opt-body"></span>';
       var body = btn.querySelector(".opt-body");
@@ -597,13 +611,15 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("result-area").hidden = true;
     if (sl) shenlunShow(q); // 申论：材料+问题+参考答案同屏展示，自评键直接可用
     if (!sl && session.mode === "recite") reciteShow(q); // 背题模式：答案高亮+解析直出，不判卷不记账
-    if (!sl && session.mode !== "wrong" && session.mode !== "recite" && store.lastAnswer[q.id]) {
+    if (!sl && session.mode !== "recite" && store.lastAnswer[q.id] &&
+        (session.mode !== "wrong" && session.mode !== "fav" || (session.answeredThisRound && session.answeredThisRound[q.id]))) {
       replayLastAnswer(q); // 作答痕迹：重遇做过的题直接呈现「提交后」的判卷页效果
     }
 
     // 计时
     session.timerStart = Date.now();
     clearInterval(session.timerId);
+    if (sl || session.mode === "recite" || session.confirmed) return;
     session.timerId = setInterval(function () {
       var sec = Math.floor((Date.now() - session.timerStart) / 1000);
       var m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -629,13 +645,20 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   var pageTimer = null;
 
   function pageTo(delta) {
-    saveCurrentNote();
+    clearTimeout(session.autoNextT);
     var next = session.index + delta;
     if (next < 0 || next >= session.queue.length) return;
+    // 上一次翻页还未换内容时先落到当前序号，避免把备注写进另一题。
+    if (pageTimer) {
+      saveCurrentNote();
+      clearTimeout(pageTimer);
+      pageTimer = null;
+      renderQuestion();
+    }
+    saveCurrentNote();
     session.index = next;
     if (!ANIM || !QCARD) { renderQuestion(); return; }
     // 重复滑动时打断上一次动画，从当前状态重新起翻
-    clearTimeout(pageTimer);
     QCARD.classList.remove("page-out-left", "page-out-right", "page-in-left", "page-in-right");
     // 第一段：旧卡滑出（期间内容不变，可继续作答当前题）
     QCARD.classList.add(delta > 0 ? "page-out-left" : "page-out-right");
@@ -646,6 +669,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       QCARD.classList.add(delta > 0 ? "page-in-right" : "page-in-left");
       pageTimer = setTimeout(function () {
         QCARD.classList.remove("page-in-left", "page-in-right");
+        pageTimer = null;
       }, 300);
     }, 170);
   }
@@ -666,6 +690,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var optsBox = $("options");
     Array.prototype.forEach.call(optsBox.children, function (el, idx) {
       el.classList.toggle("selected", idx === i);
+      el.setAttribute("aria-pressed", idx === i ? "true" : "false");
     });
     $("btn-confirm").disabled = false;
   }
@@ -673,6 +698,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   // 作答记账（行测判卷用）：todayCount/stats/wrong/answeredOrder；申论纯学习不记账
   function recordResult(q, correct) {
     store.todayCount += 1;
+    session.answeredThisRound[q.id] = 1;
     syncToday();
     if (session.mode === "daily") store.dailyDone[q.id] = 1; // 每日一练进度标记
     store.lastAnswer[q.id] = { pick: ["A", "B", "C", "D", "E", "F"][session.selected], correct: correct }; // 作答痕迹：重遇题回显
@@ -809,6 +835,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     recordResult(q, correct);
     renderRoundStat();
 
+    updateHomeBadge();
     // 结果状态与说明
     stampResult(correct);
 
@@ -843,7 +870,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
     setTimeout(function () {
       var ra = $("result-area");
-      if (ra && !ra.hidden) ra.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (ra && !ra.hidden && !views.quiz.hidden && session.current === q)
+        ra.scrollIntoView({ behavior: ANIM ? "smooth" : "auto", block: "start" });
     }, 120);
   }
 
@@ -898,10 +926,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     nextBtn.hidden = false;
     nextBtn.textContent = session.index + 1 < session.queue.length
       ? "下一题"
-      : (session.mode === "wrong" ? "完成，返回错题本"
-      : session.mode === "fav" ? "完成，返回收藏本"
-      : session.mode === "single" ? "完成"
-      : "完成，查看报告");
+      : (session.mode === "single" ? "完成" : session.times.length ? "完成，查看报告" : "完成，返回列表");
   }
 
   function showPendingStamp() {
@@ -992,6 +1017,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   }
 
   function nextQuestion() {
+    clearTimeout(session.autoNextT);
     if (session.index + 1 < session.queue.length) {
       pageTo(1);
     } else if (isShenlun(session.current) || session.mode === "recite" || session.mode === "single" || session.times.length === 0) {
@@ -1010,6 +1036,11 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   // 返回进入答题前的页面（卷目 → 卷目并刷新状态；错题本 → 错题本；收藏本 → 收藏本；其余 → 首页）
   function backToOrigin() {
+    clearInterval(session.timerId);
+    clearTimeout(session.autoNextT);
+    clearTimeout(pageTimer);
+    if (QCARD) QCARD.classList.remove("page-out-left", "page-out-right", "page-in-left", "page-in-right");
+    saveCurrentNote();
     var from = session.from || "home";
     session.from = "home";
     if (from === "catalog" && CAT_MOD) {
@@ -1031,6 +1062,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   // ---------- 结课小结 ----------
   function goHome(keepScroll) {
     clearInterval(session.timerId);
+    clearTimeout(session.autoNextT);
+    clearTimeout(pageTimer);
+    if (!views.quiz.hidden) saveCurrentNote();
     session.from = "home";
     showView("home", keepScroll);
     renderHome();
@@ -1153,6 +1187,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("scope-guokao").classList.toggle("on", cur === "guokao");
     $("scope-tianjin").classList.toggle("on", cur === "tianjin");
     $("scope-jilin").classList.toggle("on", cur === "jilin");
+    [["guokao", "scope-guokao"], ["tianjin", "scope-tianjin"], ["jilin", "scope-jilin"]].forEach(function (entry) {
+      $(entry[1]).setAttribute("aria-pressed", entry[0] === cur ? "true" : "false");
+    });
   }
 
   function switchScope(ex) {
@@ -1188,6 +1225,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         ? '<span class="accuracy">正确率 ' + Math.round(right * 100 / (right + wrong)) + "%</span>"
         : "";
       var card = document.createElement("button");
+      card.type = "button";
       card.className = "module-card";
       card.innerHTML =
         '<div class="module-zi">' + m.zi + "</div>" +
@@ -1223,6 +1261,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   }
 
   function updateHomeBadge() {
+    renderTabbar(Object.keys(views).filter(function (k) { return !views[k].hidden; })[0]);
     var ex = scopeExam();
     var n = Object.keys(store.wrong).filter(function (id) {
       var q = ALL_QUESTIONS.find(function (x) { return x.id === id; });
@@ -1339,6 +1378,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var mBox = $("stats-months");
     mBox.innerHTML = "";
     var mk = Object.keys(months).sort();
+    var maxMonth = Math.max.apply(null, mk.map(function (key) { return months[key]; }).concat(1));
     if (!mk.length) {
       mBox.innerHTML = '<div class="empty-tip">还没有练习记录，去首页做题吧</div>';
     } else {
@@ -1346,7 +1386,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         var row = document.createElement("div");
         row.className = "st-month";
         row.innerHTML = '<span class="stm-name">' + k + '</span><span class="stm-bar"><i style="width:' +
-          Math.max(6, Math.round(months[k] * 100 / months[mk[mk.length - 1]])) +
+          Math.max(6, Math.round(months[k] * 100 / maxMonth)) +
           '%"></i></span><span class="stm-num">' + months[k] + " 题</span>";
         mBox.appendChild(row);
       });
@@ -1489,11 +1529,20 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var list = $("wrong-list");
     list.innerHTML = "";
     var ids = Object.keys(store.wrong);
+    var ex = scopeExam();
+    ids = ids.filter(function (id) {
+      var q = ALL_QUESTIONS.find(function (x) { return x.id === id; });
+      return q && examOf(q) === ex;
+    });
     if (ids.length === 0) {
-      list.innerHTML = '<div class="empty-tip empty-tip-rich">错题本还是空的。<br>去做几道题，答错的会自动收进这里，连对 3 次自动销账。<br>现在就去 <b>随机练习</b> 热热身？</div>';
+      list.innerHTML = '<div class="empty-tip empty-tip-rich">当前考试范围还没有错题。答错后会自动收录，连对 3 次自动移出。</div>';
+      var action = document.createElement("button");
+      action.className = "ink-btn empty-action";
+      action.textContent = "去随机练习";
+      action.addEventListener("click", function () { startQuiz("mixed"); });
+      list.appendChild(action);
       return;
     }
-    var ex = scopeExam();
     ids.forEach(function (id) {
       var q = ALL_QUESTIONS.find(function (x) { return x.id === id; });
       if (!q) return;
@@ -1511,7 +1560,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         (kps.length && w.fails < 2 ? '<span class="kp">' + kps[0].title + "</span>" : "") +
         "</span></span>" +
         '<button class="wi-rep">重练</button>' +
-        '<button class="wi-del" title="移出错题本">✕</button>';
+        '<button class="wi-del" title="移出错题本" aria-label="移出错题本">✕</button>';
       item.querySelector(".wi-text").textContent = blankify(q.question).replace(/\s+/g, " ").slice(0, 60) + "……";
       item.querySelector(".wi-rep").addEventListener("click", function () {
         // 从该错题开始，按错题列表顺序连练
@@ -1520,6 +1569,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         startQuiz("wrong", null, { startIndex: idx < 0 ? 0 : idx, from: "wrong" });
       });
       item.querySelector(".wi-del").addEventListener("click", function () {
+        if (!confirm("确定将这道题移出错题本吗？")) return;
         delete store.wrong[id];
         saveStore();
         renderWrongBook();
@@ -1534,11 +1584,15 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var list = $("fav-list");
     list.innerHTML = "";
     var ids = Object.keys(store.favorites);
+    var ex = scopeExam();
+    ids = ids.filter(function (id) {
+      var q = ALL_QUESTIONS.find(function (x) { return x.id === id; });
+      return q && examOf(q) === ex;
+    });
     if (ids.length === 0) {
-      list.innerHTML = '<div class="empty-tip">收藏本还是空的，做题时点 ☆ 收藏喜欢的题吧</div>';
+      list.innerHTML = '<div class="empty-tip">当前考试范围还没有收藏题，做题时点 ☆ 即可收藏。</div>';
       return;
     }
-    var ex = scopeExam();
     ids.forEach(function (id) {
       var q = ALL_QUESTIONS.find(function (x) { return x.id === id; });
       if (!q) return;
@@ -1552,7 +1606,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         (store.notes[id] ? '<span class="wi-meta">有备注</span>' : "") +
         "</span>" +
         '<button class="wi-rep">重练</button>' +
-        '<button class="wi-del" title="取消收藏">✕</button>';
+        '<button class="wi-del" title="取消收藏" aria-label="取消收藏">✕</button>';
       item.querySelector(".wi-text").textContent = blankify(q.question).replace(/\s+/g, " ").slice(0, 60) + "……";
       item.querySelector(".wi-rep").addEventListener("click", function () {
         var pool = scopedPool().filter(function (x) { return store.favorites[x.id]; });
@@ -1560,6 +1614,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
         startQuiz("fav", null, { startIndex: idx < 0 ? 0 : idx, from: "fav" });
       });
       item.querySelector(".wi-del").addEventListener("click", function () {
+        if (!confirm("确定取消收藏这道题吗？")) return;
         delete store.favorites[id];
         saveStore();
         renderFavBook();
@@ -1582,6 +1637,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       return;
     }
     if (views.quiz.hidden) return;
+    if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.isContentEditable)) return;
     // 结课小结页：回车/ESC 回书房
     if (!$("summary-wrap").hidden) {
       if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
@@ -1607,7 +1663,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       browseNext();
     } else if (e.key >= "1" && e.key <= "6") {
       selectOption(+e.key - 1);
-    } else if (/^[a-d]$/i.test(e.key)) {
+    } else if (/^[a-f]$/i.test(e.key)) {
       selectOption(e.key.toUpperCase().charCodeAt(0) - 65);
     } else if (e.key === "Escape") {
       goBack();
@@ -1641,8 +1697,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   $("btn-home2").addEventListener("click", goHome);
   $("btn-again").addEventListener("click", function () {
     // 抽题练习按同题量重抽（否则模块模式会变成通练整卷）；其他模式行为不变
-    if (session.pickCount) startQuiz(session.mode, session.moduleId, { pick: session.pickCount });
-    else startQuiz(session.mode, session.moduleId);
+    startQuiz(session.mode, session.moduleId, { pick: session.pickCount, from: session.from });
   });
   $("btn-mixed").addEventListener("click", function () { startQuiz("mixed"); });
 
@@ -1651,7 +1706,10 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var n = store.mixCount || 10;
     [10, 20, 30].forEach(function (v) {
       var pill = $("mix-pill-" + v);
-      if (pill) pill.classList.toggle("on", v === n);
+      if (pill) {
+        pill.classList.toggle("on", v === n);
+        pill.setAttribute("aria-pressed", v === n ? "true" : "false");
+      }
     });
     var sub = $("mixed-sub");
     if (sub) sub.textContent = "五大模块随机抽 " + n + " 题";
@@ -1778,17 +1836,13 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
       sd.setAttribute("aria-pressed", store.sound ? "true" : "false");
       sd.classList.toggle("pref-on", store.sound);
     }
-    // 每日提醒按钮状态
-    var nb = $("tg-notify"), nc = $("btn-notify-cancel");
-    if (nb && nc && typeof Notification !== "undefined") {
-      var on = Notification.permission === "granted";
-      nb.textContent = on ? "提醒已开启" : "开启每日提醒";
-      nc.hidden = !on;
-    }
+    // 后台定时通知需要服务端推送，当前本地版不提供误导性的开关。
+    $("tg-notify").hidden = true;
+    $("btn-notify-cancel").hidden = true;
     var av = $("about-ver");
     if (av) {
       var m = location && /\?v=([0-9.]+)/.test(location.href || "") ? RegExp.$1 : "";
-      av.textContent = m || (document.querySelector('script[src*="app.js"]') && /[?&]v=([^&]+)/.test(document.querySelector('script[src*="app.js"]').src) ? RegExp.$1 : "");
+      av.textContent = m || (document.querySelector('script[src*="app.js"]') && /[?&]v=([^&]+)/.test(document.querySelector('script[src*="app.js"]').src) ? RegExp.$1 : "") || ($("app-ver") && $("app-ver").textContent) || "—";
     }
   }
   $("tg-haptic").addEventListener("click", function () {
@@ -1849,35 +1903,6 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     renderPrefs();
     renderMixBar();
     toast("随机练习题量：" + store.mixCount + " 题");
-  });
-  // 每日学习提醒：请求通知权限并注册本地通知（PWA 内可用；普通浏览器请求后由系统调度）
-  $("tg-notify").addEventListener("click", function () {
-    if (typeof Notification === "undefined") { toast("此环境不支持通知"); return; }
-    var self = this;
-    try {
-      Notification.requestPermission().then(function (p) {
-        if (p === "granted") {
-          try {
-            var n = new Notification("每日提醒已开启", { body: "每天 20:00 叫你来练题，坚持就是上岸", tag: "kaogong-daily" });
-            setTimeout(function () { try { n.close(); } catch (e) {} }, 4000);
-          } catch (e) {}
-          renderPrefs();
-          toast("每日提醒已开启");
-        } else {
-          toast("未获得通知权限，可在系统设置中手动开启");
-        }
-      });
-    } catch (e) { toast("此环境不支持通知"); }
-  });
-  $("btn-notify-cancel").addEventListener("click", function () {
-    try {
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        var n = new Notification("每日提醒已取消", { body: "下次想练随时回来，我一直在", tag: "kaogong-daily" });
-        setTimeout(function () { try { n.close(); } catch (e) {} }, 4000);
-      }
-    } catch (e) {}
-    renderPrefs();
-    toast("已取消每日提醒（系统级可在通知设置中关闭）");
   });
   if (mqDark && mqDark.addEventListener) mqDark.addEventListener("change", function () { applyDark(); renderPrefs(); });
   applyDark();
@@ -1957,6 +1982,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     if (!f) return;
     var input = this;
     var reader = new FileReader();
+    reader.onerror = function () { toast("读取备份失败，请重新选择文件"); input.value = ""; };
     reader.onload = function () {
       try {
         var d = JSON.parse(reader.result);
@@ -2037,6 +2063,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var fav = !!store.favorites[id];
     this.textContent = fav ? "★" : "☆";
     this.classList.toggle("on", fav);
+    this.setAttribute("aria-pressed", fav ? "true" : "false");
+    this.setAttribute("aria-label", fav ? "取消收藏本题" : "收藏本题");
     updateHomeBadge();
   });
   $("note-input").addEventListener("blur", function () {
@@ -2052,6 +2080,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var body = $("material-body");
     var collapsed = body.classList.toggle("collapsed");
     this.textContent = collapsed ? "展开" : "收起";
+    this.setAttribute("aria-expanded", collapsed ? "false" : "true");
   });
   $("scope-guokao").addEventListener("click", function () { switchScope("guokao"); });
   $("scope-tianjin").addEventListener("click", function () { switchScope("tianjin"); });
@@ -2071,13 +2100,19 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function openSearchView() {
     showView("search");
     var input = $("search-input");
+    searchQuestions(input.value);
     setTimeout(function () { try { input.focus(); } catch (e) {} }, 60);
   }
   function searchQuestions(kw) {
     kw = (kw || "").trim();
     var tip = $("search-tip");
     var box = $("search-results");
-    if (!kw) { tip.hidden = true; box.innerHTML = ""; return; }
+    if (!kw) {
+      tip.hidden = false;
+      tip.textContent = "输入题干、选项或年份关键词，找到题目后可直接作答与分享。";
+      box.innerHTML = "";
+      return;
+    }
     var lower = kw.toLowerCase();
     var hits = [];
     for (var i = 0; i < ALL_QUESTIONS.length && hits.length < 60; i++) {
