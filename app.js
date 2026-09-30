@@ -438,7 +438,10 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.mode = mode;
     session.moduleId = moduleId || null;
     session.from = opts.from || "home";
-    session.queue = mode === "mixed" ? pickQuestions(pool, store.mixCount || 10) : pool.slice(); // 列表模式保持列表顺序，可滑动浏览
+    // 抽题练习：从模块题池随机抽 N 题（复用智能抽题：错题优先+近期练过的不出）
+    session.queue = opts.pick
+      ? pickQuestions(pool, opts.pick)
+      : (mode === "mixed" ? pickQuestions(pool, store.mixCount || 10) : pool.slice()); // 列表模式保持列表顺序，可滑动浏览
     session.index = opts.startIndex || 0;
     if (session.index >= session.queue.length) session.index = 0;
     // 每日一练断点续练：跳到第一道今天还没答的题（全部答完则从第一题再来一轮）
@@ -1408,6 +1411,9 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     $("btn-cat-practice").textContent = isSlCat ? "顺序学习" : "通练此卷";
     $("btn-sl-guide").hidden = !isSlCat;
     $("btn-cat-recite").hidden = isSlCat; // 背题模式仅行测卷目可用
+    // 抽题练习条：行测卷目显示（随机抽 10/20/30），申论纯学习无判卷不显示
+    var drawBar = $("cat-draw-bar");
+    if (drawBar) drawBar.hidden = isSlCat;
     $("catalog-tip").textContent = isSlCat
       ? "共 " + qs.length + " 题 · 纯学习模式：材料、题目与参考答案同屏，不计成绩"
       : "共 " + qs.length + " 题 · 已做 " + done + " 题 · 点击题目从该题开始练习，左右滑动切换";
@@ -1662,6 +1668,17 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   });
   $("btn-cat-practice").addEventListener("click", function () {
     if (CAT_MOD) startQuiz("module", CAT_MOD, { from: "catalog" });
+  });
+  // 模块抽题练习：从当前模块随机抽 10/20/30 题（智能抽题：错题隔期优先，近期练过的不出）
+  [10, 20, 30].forEach(function (n) {
+    $("cat-pill-" + n).addEventListener("click", function () {
+      if (!CAT_MOD) return;
+      var qn = scopedPool().filter(function (q) { return q.module === CAT_MOD && !isShenlun(q); }).length;
+      var take = Math.min(n, qn);
+      if (qn === 0) { toast("该模块暂时没有题目"); return; }
+      if (qn < n) toast("该模块仅 " + qn + " 题，全部抽入");
+      startQuiz("module", CAT_MOD, { from: "catalog", pick: take });
+    });
   });
   $("btn-cat-recite").addEventListener("click", function () {
     if (CAT_MOD) startQuiz("recite", CAT_MOD, { from: "catalog" });
