@@ -309,7 +309,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   // 返回上一级：答题页回进入前的页面；申论指南回申论卷目；其余视图回首页
   function goBack() {
-    if (!views.quiz.hidden) { backToOrigin(); return; }
+    if (!views.quiz.hidden) { if (confirmQuitIfNeeded()) backToOrigin(); return; }
     if (!views.slguide.hidden) { showView("catalog", true); return; }
     if (!views.search.hidden) { showView("home", true); return; }
     goHome(true);
@@ -438,6 +438,7 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     session.mode = mode;
     session.moduleId = moduleId || null;
     session.from = opts.from || "home";
+    session.pickCount = opts.pick || 0; // 记住抽题题量：总结页「再来一轮」按同题量重抽
     // 抽题练习：从模块题池随机抽 N 题（复用智能抽题：错题优先+近期练过的不出）
     session.queue = opts.pick
       ? pickQuestions(pool, opts.pick)
@@ -659,6 +660,8 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     var q = session.current;
     if (session.confirmed || !q || !q.options || !q.options.length) return;
     if (i >= q.options.length) return;
+    // 二次点击已选中的选项＝直接提交（想改选点其他选项即可，V3.31.0）
+    if (session.selected === i) { confirmAnswer(); return; }
     session.selected = i;
     var optsBox = $("options");
     Array.prototype.forEach.call(optsBox.children, function (el, idx) {
@@ -1121,6 +1124,17 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   function quitQuiz() {
     backToOrigin();
     toast("已练习 " + store.todayCount + " 题，继续加油！");
+  }
+
+  // 退出练习保护（V3.31.0）：本轮已答 ≥5 题且报告未出时，误触退出需确认（防手滑丢整轮）
+  function confirmQuitIfNeeded() {
+    try {
+      var sw = $("summary-wrap");
+      if (!views.quiz.hidden && sw && sw.hidden !== false && session.times && session.times.length >= 5) {
+        return confirm("本轮已答 " + session.times.length + " 题，确定退出吗？退出后本轮不会生成报告");
+      }
+    } catch (e) {}
+    return true;
   }
   // ---------- 首页 ----------
   // 考试范围切换条：范围无题时隐藏胶囊，避免误入空题库
@@ -1620,10 +1634,15 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   // ---------- 事件绑定 ----------
   $("btn-back").addEventListener("click", goBack);
-  $("btn-home").addEventListener("click", goHome);
+  $("btn-home").addEventListener("click", function () {
+    if (!views.quiz.hidden && !confirmQuitIfNeeded()) return;
+    goHome();
+  });
   $("btn-home2").addEventListener("click", goHome);
   $("btn-again").addEventListener("click", function () {
-    startQuiz(session.mode, session.moduleId);
+    // 抽题练习按同题量重抽（否则模块模式会变成通练整卷）；其他模式行为不变
+    if (session.pickCount) startQuiz(session.mode, session.moduleId, { pick: session.pickCount });
+    else startQuiz(session.mode, session.moduleId);
   });
   $("btn-mixed").addEventListener("click", function () { startQuiz("mixed"); });
 
@@ -1964,28 +1983,28 @@ document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
     showView("slguide");
   });
 
-  // 底部导航：四页签直达（答题页中点导航＝先退出本轮）
+  // 底部导航：页签直达（答题页中点导航＝先退出本轮，≥5 题需确认防误触）
   $("tab-home").addEventListener("click", function () {
-    if (!views.quiz.hidden) { quitQuiz(); return; }
+    if (!views.quiz.hidden) { if (!confirmQuitIfNeeded()) return; quitQuiz(); return; }
     if (views.home.hidden) goHome();
   });
   $("tab-stats").addEventListener("click", function () {
-    if (!views.quiz.hidden) { quitQuiz(); }
+    if (!views.quiz.hidden) { if (!confirmQuitIfNeeded()) return; quitQuiz(); }
     renderStats();
     showView("stats");
   });
   $("tab-wrong").addEventListener("click", function () {
-    if (!views.quiz.hidden) { quitQuiz(); }
+    if (!views.quiz.hidden) { if (!confirmQuitIfNeeded()) return; quitQuiz(); }
     renderWrongBook();
     showView("wrong");
   });
   $("tab-fav").addEventListener("click", function () {
-    if (!views.quiz.hidden) { quitQuiz(); }
+    if (!views.quiz.hidden) { if (!confirmQuitIfNeeded()) return; quitQuiz(); }
     renderFavBook();
     showView("fav");
   });
   $("tab-settings").addEventListener("click", function () {
-    if (!views.quiz.hidden) { quitQuiz(); }
+    if (!views.quiz.hidden) { if (!confirmQuitIfNeeded()) return; quitQuiz(); }
     renderPrefs();
     showView("settings");
   });
