@@ -710,7 +710,7 @@ window.QUESTIONS_XZ_TJ_ZL = {
     "C. 1：4",
     "D. 1：5"
    ],
-   "answer": "B",
+   "answer": "A",
    "analysis": "定位图形材料可知，在城市学校的分布率中，师范C点占一格，普通中学D点占三格，则师范与普通中学之比是1：3。\n故正确答案为B。",
    "exam": "tianjin",
    "year": 2017,
@@ -2019,7 +2019,7 @@ window.QUESTIONS_XZ_TJ_ZL = {
     "C. 涤纶长丝与甲醇",
     "D. 纯苯与硫酸"
    ],
-   "answer": "D",
+   "answer": "B",
    "analysis": "根据题干“价格环比涨跌幅相差最大”，可以判定本题为一般增长率问题。根据表格可知2019年7月上旬各类产品本期价格和比上期价格涨跌量。根据公式：增长率img/formula-a076afa194d7b5d6.webp。A项，涤纶长丝的增长率为img/formula-b778edae609325a0.webpimg/formula-3c3b3a98efd0f049.webp，顺丁胶的增长率为img/formula-0cd205d476199800.webpimg/formula-446739dd64b2bda3.webp，则涤纶长丝与顺丁胶涨跌幅度相差img/formula-aa0fbd26d1d97737.webp，即8.8个百分点；B项，纯苯的增长率为img/formula-87e6e03897e1af5e.webpimg/formula-cc6bce9a79c29a28.webp，则纯苯与顺丁胶涨跌幅度相差img/formula-787bb999eeb56d5e.webp，即9.8个百分点；C项，甲醇的增长率为img/formula-10670686f0fc1562.webpimg/formula-e2550973551584f1.webp，则涤纶长丝与甲醇涨跌幅度相差img/formula-6ee8c9f525564314.webp，即7.8个百分点；D项，硫酸的增长率为img/formula-bda2c5b2f1ac403f.webpimg/formula-846a05663c1f25ed.webp，则纯苯与硫酸涨跌幅度相差img/formula-974fe47713330ebf.webp，即11.3个百分点。综上可知，D项价格环比涨跌幅相差最大，当选。\n故正确答案为D。",
    "exam": "tianjin",
    "year": 2021,

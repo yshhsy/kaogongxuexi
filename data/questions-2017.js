@@ -488,7 +488,7 @@ window.QUESTIONS_2017 = {
     { id: "n2017fs-104", module: "判断推理", source: "2017年国考副省级卷", materialId: null,
       question: "教案 对于 （ ） 相当于 （ ） 对于 分类",
       options: ["课件 信息", "教学 归类", "提纲 商品", "授课 标准"],
-      answer: "B", knowledgeIds: [],
+      answer: "D", knowledgeIds: [],
       analysis: "代入B项：教案是开展教学的依据（依据教案进行教学），归类是进行分类的依据（依据归类进行分类），前后均为“依据—行为”的对应关系，逻辑一致。其他选项代入后前后关系均不对应。选B。" },
     { id: "n2017fs-105", module: "判断推理", source: "2017年国考副省级卷", materialId: null,
       question: "故人西辞黄鹤楼 对于 （ ） 相当于 （ ） 对于 怀古",

@@ -553,7 +553,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "观察题干数字均为小数，进行机械拆分后整数部分为：2、3、（    ）、8、13，小数部分为：1、4、（    ）、16、25。观察小数部分发现均为平方数，所以所求项的小数部分应为img/formula-5a6e59ebb56e2a28.webp，只有C项符合，代入C项的整数部分5，得到数列的整数部分2、3、5、8、13，恰好满足规律“前两项之和等于后一项”。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-u5vdz7",
@@ -570,7 +570,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "观察数列，后一项分数的分母等于前一项分数的分子与分母之和，后一项分数的分子等于该分数的分母与前一项分数的分子之和，所以所求项的分母为img/formula-1a851c76ed8aef0a.webp，分子为img/formula-30a6349c6dfee619.webp，即所求项为img/formula-ff24471282c1ef23.webp。\n故正确答案为D。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-18mxxp",
@@ -587,7 +587,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "分数数列，分母没有呈递增趋势，优先反约分。原数列可转化为：img/formula-ff6fcfdeec885072.webp、img/formula-522dd91779605ffa.webp、img/formula-b636d79c95cd07eb.webp、（    ）、img/formula-ba9449835971e6e4.webp、img/formula-a4cf0a54da7fb6d1.webp，发现分母是公比为2的等比数列，分子是公差为1的等差数列，所以所求项应为img/formula-7a4338bf714832c2.webp。\n故正确答案为D。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-1ys19kq",
@@ -604,7 +604,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "由选项可知，游客人数一定超过10人。设该旅游团游客人数为img/formula-df39880a7c135d23.webp人，根据题意可得：img/formula-afede6e57c9a624d.webp，解得img/formula-a4456e17b3fde797.webp，即该旅游团共有游客30人。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-1c863jj",
@@ -621,7 +621,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "长方形纸板按AF折痕折叠后，由图可知AB与AE重合，故img/formula-93c3caa4d47d7a8f.webp，img/formula-e855d7822e229292.webp。而img/formula-9f0b21ce4896383c.webp也为img/formula-d49189d80272a7c6.webp，所以ABFE为正方形，故img/formula-2e8e7dc8eeb79f8f.webp。根据勾股定理，img/formula-ce23443f473278af.webpimg/formula-7261ea1f2ac5cb35.webpimg/formula-414c6a4107f8c389.webp img/formula-43bd490b106ddf5c.webp，故img/formula-2ee43cd03701922d.webpimg/formula-edda4aa9e9f29bb7.webpimg/formula-49cd2a8cc4802c21.webp。\n故正确答案为D。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-1ixgvo",
@@ -638,7 +638,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "24小时，分针转了24圈，时针转了2圈，时间相同，分针转的圈数是时针的img/formula-33765c9821330deb.webp倍，则分针转动的速度为时针的12倍，因办理业务时间为定值，则分针旋转过的角度为时针的12倍。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-1azfpx5",
@@ -655,7 +655,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "原有7只乒乓球，其中4只白球，则第一次取出白球的概率为img/formula-81be9409f4cbc909.webp，然后将2只白球放入袋中，此时共有乒乓球img/formula-dfc0a565a087dcf6.webp只，黄球3只，第二次取出黄球的概率为img/formula-55677551bad9617c.webp。分步用乘法，则题目所求的概率为img/formula-98683b44c6b51818.webp。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-vs9nls",
@@ -672,7 +672,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "由题意可得，每个锦囊均有4个不同的锦盒可以放置，则5个锦囊总的放置方法数为img/formula-0a2f44dc8f9650d9.webpimg/formula-0c793ae1bc0b6efa.webpimg/formula-5eabdf83e3edad37.webp种。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2018,
-   "materialId": "xzm-s44ul2-1"
+   "materialId": null
   },
   {
    "id": "xz-1lt2gfs",
@@ -1014,7 +1014,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "方法一：数项都是三位数，考虑机械划分。将原数列中的数字拆成三个数字去看，1、2、3是公差为1的等差数列，1、4、7是公差为3的等差数列，2、5、8是公差为3的等差数列，4、3、2是公差为-1的等差数列，即规律为：每个三位数的数字依次为等差数列，观察选项，只有A项3、4、5符合等差数列。\n方法二：数项都是三位数，考虑机械划分。将原数列中的数字拆成三个数字去看，发现123中：img/formula-45233d7d08d41b99.webp，147中：img/formula-777754991244e2e9.webp，258中：img/formula-68f53353cc0ed603.webp，432中：img/formula-6bb7bc26a8bc650e.webp；规律为三位数中，中间数字是两端数字的平均数。观察选项，满足此规律的只有A项，img/formula-03b62e4ab6027915.webp。\n故正确答案为A。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-1l9nrzm",
@@ -1031,7 +1031,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "方法一：根据今年本科生毕业人数减少img/formula-a8c8f28c84d82b38.webp，则今年本科生毕业人数：去年本科生毕业人数img/formula-1635f499da144645.webp。则今年本科生毕业人数一定是49的整数倍，结合选项，只有C项符合。\n方法二：根据题意，上年度毕业学生为 img/formula-38d1d6a6e452d817.webp人。结合混合增长率，增长率的差值之比与基期量之比成反比，则有img/formula-bbae4ad9db7b6dc8.webpimg/formula-87f9c7ddbbce7d57.webp，则上年度研究生毕业人数与本科生毕业人数之比为img/formula-f4ee0949beae77f9.webp。则上年度本科生毕业人数为img/formula-03e95d62224694ce.webp人，因此今年本科生毕业人数为img/formula-a546b0ac5712d403.webp人。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-t9cl90",
@@ -1048,7 +1048,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "思路一：根据题意，已知预存1000元抵用1万元，原价20万，则抵用后价格为img/formula-51b29ed08c0373f5.webp万，又因为还可以再打九折，所以折后还需要支付img/formula-b566934c805c03d6.webp万元，因此总共支付金额img/formula-97af6a24b93190a2.webpimg/formula-6cf42df7d9e080a5.webp。\n思路二：已知预存1000元可拥有1万元抵用券，原价20万，则抵用后价格为img/formula-51b29ed08c0373f5.webp万，又因为还可以再打九折，所以折后需要支付img/formula-b566934c805c03d6.webp万元，但是预存了1000元也就是0.1万，购车时可以抵用，所以购车时又支付img/formula-4baad975ecdfb50b.webp，因此总共支付金额img/formula-41c1cd623c8e8a87.webpimg/formula-75ad33f95a320e50.webp。\n备注：两种思路的争议在于预存的1000元是否可以抵扣最终的车款，第一种思路是预存1000元相当于支付1000元用于购买1万元抵用券，后期这1000元不再抵用车款；第二种思路是预存1000元便拥有1万元抵用券，后期这1000元仍然可以抵用车款。粉笔倾向于第一种思路，这是因为命题人设计了17.1万元和17.2万元、18.1万元和18.2万元，其考点明显在于前面的1000元要不要算，而问法还写了“总共支付了”，意思是多次支付，故倾向于答案为B。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-zusic4",
@@ -1065,7 +1065,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "本月1号到28号共计28天，有四个完整的星期，因此1号对应的星期数与29号星期数相同，已知28号是星期四，则29号是星期五，所以1号也是星期五。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-1s1icjh",
@@ -1082,7 +1082,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "由于本题只给出完工时间，故可采用赋值法，赋值原来每天的效率为1，则总工程量img/formula-f4ae021d7b5524f5.webp。根据题意可得，从第一天到第五天每天的效率依次为：1、1、2、4、8，故其每天完成的工程量依次为1、1、2、4、8，这五天完成的总工程量为1+1+2+4+8=16，剩余的工程量为img/formula-e287f1f52219e749.webp，由于第六天可完成的工程量为img/formula-79ba1cdc08d2fb08.webp，故完成这个工程至少需要6天。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-1nas246",
@@ -1099,7 +1099,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "假设原来的半径为img/formula-40cf334a70349847.webp厘米。半径变为原来的4倍后，圆的面积为img/formula-c27d09dda59e0565.webp平方厘米；半径增加2厘米后，圆的面积为img/formula-5a3aa3d723c4af3b.webp平方厘米。根据题干可得：img/formula-20aae9938003b8a4.webpimg/formula-9133f0889c3d0f27.webp，化简得到img/formula-67b8308ac51e0f37.webp，即img/formula-619f6c191a29a164.webp，解得img/formula-8c5b6be560b37437.webp，img/formula-ae1c4b5756035ea2.webp，半径不能为负，所以原来的半径为2厘米。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-1illyu1",
@@ -1116,7 +1116,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "从学校到滑雪场的路程img/formula-175777b7aa99c4d2.webpimg/formula-43fd11b71bef80b9.webp公里。社团骑行2小时，游玩4小时，共花费img/formula-63b9c0182193f603.webp小时后原路返回。客车在社团离开5.5小时后开始出发，相当于在社团原路返回时，客车已走了img/formula-a981ad26873c41a2.webp小时，也就是走了img/formula-7b7ffff408171022.webp公里。剩余的20公里，相当于客车与社团在线段两端出发相遇的过程，根据img/formula-1816f5d29f6643bb.webp，可得img/formula-11f028db39d5805c.webp，解得img/formula-d16a0eecc74e30ed.webp小时。故相遇时大客车共走了img/formula-ad087de697f3e5b3.webp，即50分钟。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-nplxpe",
@@ -1133,7 +1133,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "方法一：根据“每天学习时长都比前一天增加img/formula-8f61834c0c636317.webp”，可知每天的学习时长是前一天的img/formula-69bc88ba9c9c5985.webp倍，即每天的学习时长是公比为img/formula-9e49f9c576ad20ed.webp的等比数列，由等比数列的通项公式img/formula-7def1610756a41dd.webp，可得第5天学习时长为：img/formula-1a901b6950bb32d0.webp分钟。\n方法二：枚举法。第1天学习时长为16分钟，依据题意，第2天学习时长为img/formula-55fdb0639fcf2a2d.webp分钟，第3天学习时长为img/formula-7d289eee56f6f818.webp分钟，第4天学习时长为img/formula-e9843f6391fd3506.webp分钟，第5天学习时长为img/formula-60c0693b28e44c8d.webp分钟。\n故正确答案为C。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-1tvhrzz",
@@ -1150,7 +1150,7 @@ window.QUESTIONS_XZ_JL_SL = {
    "analysis": "两张奖券中一张有奖一张无奖共有两种情况：1.第一张有奖第二张无奖；2.第一张无奖第二张有奖。\n1.第一张有奖第二张无奖：先抽一张有奖的，概率为img/formula-091517bf49d26951.webp，再抽一张无奖的，概率为img/formula-99e62bee3d75ab0d.webp，该种情况的概率为img/formula-da125f6660270ba8.webpimg/formula-bef3ff4e932e42bf.webp；\n2.第一张无奖第二张有奖：先抽一张无奖的，概率为img/formula-17531d8bc22aa4bb.webp，再抽一张有奖的，概率为img/formula-34fe3bf3ab89abeb.webp，则该种情况的概率为img/formula-d4ab2b5558040542.webp。\n两种情况总的概率为img/formula-9ab31b7568dc54ee.webp。\n故正确答案为D。",
    "exam": "jilin",
    "year": 2019,
-   "materialId": "xzm-tskt9a-2"
+   "materialId": null
   },
   {
    "id": "xz-4rtnj6",

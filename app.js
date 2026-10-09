@@ -324,32 +324,64 @@
 
   // ---------- 出题策略 ----------
   // 隔期优先：超过 2 天没练的错题优先重出；未做错的新题次之；避开最近答过的
+  // 材料题成组出题：同 materialId 的多道题绑为一个出题单元，整组连续出现，不拆散
+  function materialUnits(pool) {
+    var groups = {};
+    var units = [];
+    pool.forEach(function (q) {
+      if (q.materialId) {
+        if (!groups[q.materialId]) { groups[q.materialId] = []; units.push(groups[q.materialId]); }
+        groups[q.materialId].push(q); // 组内保持题库原顺序
+      } else {
+        units.push([q]);
+      }
+    });
+    return units;
+  }
+
   function pickQuestions(pool, count) {
     var now = Date.now();
     var TWO_DAYS = 2 * 24 * 3600 * 1000;
     var recent = store.answeredOrder.slice(-Math.min(5, pool.length));
+    var units = materialUnits(pool);
 
     var due = [];
     var fresh = [];
-    pool.forEach(function (q) {
-      if (recent.indexOf(q.id) >= 0) return;
-      var w = store.wrong[q.id];
-      if (w && (!w.lastPracticedAt || now - w.lastPracticedAt > TWO_DAYS)) {
-        due.push(q);
-      } else if (!w) {
-        fresh.push(q);
-      }
+    units.forEach(function (u) {
+      // 组内任一题刚答过就整组避开，避免同一材料连续两轮重复出现
+      var isRecent = u.some(function (q) { return recent.indexOf(q.id) >= 0; });
+      if (isRecent) return;
+      var uDue = false;
+      var uFresh = false;
+      u.forEach(function (q) {
+        var w = store.wrong[q.id];
+        if (w && (!w.lastPracticedAt || now - w.lastPracticedAt > TWO_DAYS)) uDue = true;
+        else if (!w) uFresh = true;
+      });
+      if (uDue) due.push(u);
+      else if (uFresh) fresh.push(u);
     });
 
-    var picked = shuffle(due).slice(0, count);
-    if (picked.length < count) {
-      picked = picked.concat(shuffle(fresh).slice(0, count - picked.length));
+    // 按单元抽取直到题量足够（整组进队，末组可能略超 count，保证材料组不被腰斩）
+    var pickedUnits = [];
+    var total = 0;
+    function take(list) {
+      var s = shuffle(list);
+      for (var i = 0; i < s.length && total < count; i++) {
+        pickedUnits.push(s[i]);
+        total += s[i].length;
+      }
     }
-    if (picked.length < count) {
-      var rest = pool.filter(function (q) { return picked.indexOf(q) < 0; });
-      picked = picked.concat(shuffle(rest).slice(0, count - picked.length));
+    take(due);
+    if (total < count) take(fresh);
+    if (total < count) {
+      var inPicked = {};
+      pickedUnits.forEach(function (u) { u.forEach(function (q) { inPicked[q.id] = 1; }); });
+      var rest = units.filter(function (u) { return !u.some(function (q) { return inPicked[q.id]; }); });
+      take(rest);
     }
-    return shuffle(picked).slice(0, count);
+    // 单元间乱序，组内顺序保持不变
+    return shuffle(pickedUnits).reduce(function (arr, u) { return arr.concat(u); }, []);
   }
 
   // ---------- 每日一练：按日期+范围种子固定组卷，同一天题目一致，可断点续练 ----------
@@ -368,7 +400,13 @@
   function dailyGroup() {
     var pool = scopedPool().filter(function (q) { return !isShenlun(q); });
     if (!pool.length) return [];
-    return seededShuffle(pool, todayStr + "|" + scopeExam()).slice(0, Math.min(20, pool.length));
+    // 材料题成组：同 materialId 整组连续，不因截断拆散
+    var units = materialUnits(pool);
+    var shuffled = seededShuffle(units, todayStr + "|" + scopeExam());
+    var out = [];
+    var n = Math.min(20, pool.length);
+    for (var i = 0; i < shuffled.length && out.length < n; i++) out = out.concat(shuffled[i]);
+    return out;
   }
 
   // 首页每日一练卡：进度/完成态/重练入口
@@ -682,10 +720,36 @@
   // 浏览式下一题（只切题不结课；判卷后的“下一题”按钮另有结课分支）
   function browseNext() { pageTo(1); }
 
+  // 多选题：answer 为多个字母（如 "ABD"）时启用多选作答模式
+  function isMultiChoice(q) {
+    return q && typeof q.answer === "string" && q.answer.length > 1 && !isShenlun(q);
+  }
+  function answerIndexes(q) {
+    var arr = [];
+    for (var i = 0; i < q.answer.length; i++) arr.push(q.answer.charCodeAt(i) - 65);
+    return arr;
+  }
+
   function selectOption(i) {
     var q = session.current;
     if (session.confirmed || !q || !q.options || !q.options.length) return;
     if (i >= q.options.length) return;
+    if (isMultiChoice(q)) {
+      // 多选：点选项＝加入/移出选择集，由「提交答案」判卷
+      var picks = session.selected || [];
+      var at = picks.indexOf(i);
+      if (at >= 0) picks.splice(at, 1);
+      else picks.push(i);
+      session.selected = picks;
+      var optsBox = $("options");
+      Array.prototype.forEach.call(optsBox.children, function (el, idx) {
+        var on = picks.indexOf(idx) >= 0;
+        el.classList.toggle("selected", on);
+        el.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      $("btn-confirm").disabled = picks.length === 0;
+      return;
+    }
     // 二次点击已选中的选项＝直接提交（想改选点其他选项即可，V3.31.0）
     if (session.selected === i) { confirmAnswer(); return; }
     session.selected = i;
@@ -698,12 +762,12 @@
   }
 
   // 作答记账（行测判卷用）：todayCount/stats/wrong/answeredOrder；申论纯学习不记账
-  function recordResult(q, correct) {
+  function recordResult(q, correct, pick) {
     store.todayCount += 1;
     session.answeredThisRound[q.id] = 1;
     syncToday();
     if (session.mode === "daily") store.dailyDone[q.id] = 1; // 每日一练进度标记
-    store.lastAnswer[q.id] = { pick: ["A", "B", "C", "D", "E", "F"][session.selected], correct: correct }; // 作答痕迹：重遇题回显
+    store.lastAnswer[q.id] = { pick: pick || ["A", "B", "C", "D", "E", "F"][session.selected], correct: correct }; // 作答痕迹：重遇题回显
     if (!store.stats[q.id]) store.stats[q.id] = { right: 0, wrong: 0 };
     if (correct) {
       store.stats[q.id].right += 1;
@@ -769,11 +833,13 @@
   function replayLastAnswer(q) {
     var la = store.lastAnswer[q.id];
     var letters = ["A", "B", "C", "D", "E", "F"];
-    var optIdx = q.answer.charCodeAt(0) - 65;
-    var pickIdx = letters.indexOf(la.pick);
+    var rightIdx = answerIndexes(q);
+    var picks = la.pick || "";
     Array.prototype.forEach.call($("options").children, function (el, idx) {
-      if (idx === optIdx) el.classList.add("correct");
-      else if (idx === pickIdx) el.classList.add("wrong");
+      var isRight = rightIdx.indexOf(idx) >= 0;
+      var isPicked = letters[idx] && picks.indexOf(letters[idx]) >= 0;
+      if (isRight) el.classList.add("correct");
+      else if (isPicked) el.classList.add("wrong");
       else el.classList.add("dim");
     });
     session.confirmed = true; // 已呈判卷态，选项锁定不可重答（重练走错题本）
@@ -813,9 +879,12 @@
     var usedSec = Math.round((Date.now() - session.timerStart) / 1000);
     session.times.push(usedSec);
     var letters = ["A", "B", "C", "D", "E", "F"];
-    var userAnswer = letters[session.selected];
+    var multi = isMultiChoice(q);
+    var userAnswer = multi
+      ? (session.selected || []).slice().sort(function (a, b) { return a - b; }).map(function (i) { return letters[i]; }).join("")
+      : letters[session.selected];
     var correct = userAnswer === q.answer;
-    var optIdx = q.answer.charCodeAt(0) - 65;
+    var rightIdx = answerIndexes(q);
 
     // 连对计数（本轮内）：庆祝节奏用，不入库
     session.streak = correct ? (session.streak || 0) + 1 : 0;
@@ -828,13 +897,15 @@
       el.classList.remove("selected", "last-pick");
       var oldTag = el.querySelector(".last-tag");
       if (oldTag && oldTag.remove) oldTag.remove();
-      if (idx === optIdx) el.classList.add("correct");
-      else if (idx === session.selected) el.classList.add("wrong");
+      var isRight = rightIdx.indexOf(idx) >= 0;
+      var isPicked = multi ? (session.selected || []).indexOf(idx) >= 0 : idx === session.selected;
+      if (isRight) el.classList.add("correct");
+      else if (isPicked) el.classList.add("wrong");
       else el.classList.add("dim");
     });
 
     // 记账
-    recordResult(q, correct);
+    recordResult(q, correct, userAnswer);
     renderRoundStat();
 
     updateHomeBadge();
@@ -947,11 +1018,11 @@
     session.peeked = true;
 
     // 高亮正确选项，其余淡去
-    var optIdx = q.answer.charCodeAt(0) - 65;
+    var rightIdx = answerIndexes(q);
     var optsBox = $("options");
     Array.prototype.forEach.call(optsBox.children, function (el, idx) {
       el.classList.remove("selected");
-      el.classList.add(idx === optIdx ? "correct" : "dim");
+      el.classList.add(rightIdx.indexOf(idx) >= 0 ? "correct" : "dim");
     });
 
     showPendingStamp();
@@ -971,25 +1042,31 @@
   // 收回答案，回到作答状态（原选中态恢复，答题正常计成绩）
   function unpeek() {
     session.peeked = false;
+    var q = session.current;
     Array.prototype.forEach.call($("options").children, function (el, idx) {
       el.classList.remove("correct", "dim");
-      el.classList.toggle("selected", session.selected === idx);
+      var on = isMultiChoice(q)
+        ? (session.selected || []).indexOf(idx) >= 0
+        : session.selected === idx;
+      el.classList.toggle("selected", on);
     });
     $("result-area").hidden = true;
     $("btn-next").hidden = true;
     var confirmBtn = $("btn-confirm");
     confirmBtn.textContent = "提交答案";
-    confirmBtn.disabled = session.selected === null;
+    confirmBtn.disabled = isMultiChoice(q)
+      ? !(session.selected && session.selected.length)
+      : session.selected === null;
     $("btn-peek").hidden = false;
   }
 
   // ---------- 背题模式：自动亮答案+解析，不判卷不记账，适合纯记忆型背诵 ----------
   function reciteShow(q) {
     session.confirmed = true; // 锁定选项，背题中不可作答
-    var optIdx = q.answer.charCodeAt(0) - 65;
+    var rightIdx = answerIndexes(q);
     Array.prototype.forEach.call($("options").children, function (el, idx) {
       el.classList.remove("selected");
-      el.classList.add(idx === optIdx ? "correct" : "dim");
+      el.classList.add(rightIdx.indexOf(idx) >= 0 ? "correct" : "dim");
     });
     showPendingStamp();
     $("result-meta").innerHTML = '正确答案是 <span class="dai">' + q.answer +
