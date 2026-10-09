@@ -1990,12 +1990,12 @@
   renderPrefs();
 
   // ---------- 新版本提示：SW 更新就绪后引导刷新（首次安装不提示） ----------
+  // 页面自身版本：从 app.js 的 ?v= 参数取（构建时注入，与 sw.js 的 CACHE 版本一致）
+  var pageVer = "";
+  var appScript = document.querySelector('script[src*="app.js"]');
+  if (appScript && /[?&]v=([^&]+)/.test(appScript.src)) pageVer = RegExp.$1;
   if ("serviceWorker" in navigator) {
     try {
-      // 页面自身版本：从 app.js 的 ?v= 参数取（构建时注入，与 sw.js 的 CACHE 版本一致）
-      var pageVer = "";
-      var appScript = document.querySelector('script[src*="app.js"]');
-      if (appScript && /[?&]v=([^&]+)/.test(appScript.src)) pageVer = RegExp.$1;
       navigator.serviceWorker.getRegistration().then(function (reg) {
         if (!reg) return;
         function showUpdateBar() {
@@ -2032,6 +2032,62 @@
         try { reg.update(); } catch (e) {} // 立即强制检查更新，不等浏览器节流的周期检查
       });
     } catch (e) {}
+  }
+
+  // ---------- 设置页「检查更新」按钮：手动拉最新 SW 并引导刷新 ----------
+  var btnCheckUpdate = $("btn-check-update");
+  if (btnCheckUpdate) {
+    btnCheckUpdate.addEventListener("click", function () {
+      var statusEl = $("update-status");
+      function status(t) { if (statusEl) statusEl.textContent = t; }
+      btnCheckUpdate.disabled = true;
+      status("正在检查…");
+      if (!("serviceWorker" in navigator)) {
+        // 无 SW 环境（如 iOS Safari 普通标签页未注册）：直接对比线上页面版本号
+        fetch("sw.js", { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (txt) {
+          var m = txt.match(/xingce-quiz-v([\d.]+)/);
+          var online = m ? m[1] : "";
+          if (online && online !== pageVer) {
+            status("发现新版本 v" + online + "，正在刷新…");
+            setTimeout(function () { location.reload(); }, 600);
+          } else {
+            status(online ? "已是最新 v" + online : "无法获取线上版本，请稍后再试");
+          }
+        }).catch(function () { status("网络异常，连不上 github.io，可稍后再试或切换网络"); })
+        .then(function () { btnCheckUpdate.disabled = false; });
+        return;
+      }
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (!reg) { status("未注册离线缓存，直接刷新即可"); btnCheckUpdate.disabled = false; return; }
+        var done = false;
+        var refreshed = false;
+        function finish(msg) {
+          if (done) return;
+          done = true;
+          btnCheckUpdate.disabled = false;
+          if (msg) status(msg);
+        }
+        // 新 SW 接管（skipWaiting 后 claim）→ 页面自动 reload（sessionStorage 防循环）
+        navigator.serviceWorker.oncontrollerchange = function () {
+          if (refreshed) return;
+          refreshed = true;
+          try { if (!sessionStorage.getItem("__updated")) { sessionStorage.setItem("__updated", "1"); } } catch (e) {}
+          status("更新完成，正在刷新…");
+          setTimeout(function () { location.reload(); }, 400);
+        };
+        reg.update().then(function () {
+          // update() 后立即看状态：等待中=新版已下载待接管；仍是激活版=线上无更新
+          setTimeout(function () {
+            if (reg.waiting) { status("新版本已就绪，再次点击以应用"); return; }
+            finish("正在下载新版本…（若长时间无反应，请再点一次或切换网络）");
+          }, 1500);
+        }).catch(function () {
+          finish("网络异常，连不上 github.io，可稍后再试或切换网络");
+        });
+        // 超时兜底：30 秒没完成就解除按钮锁定
+        setTimeout(function () { finish(done ? "" : "检查超时，github.io 访问较慢，可再试一次"); }, 30000);
+      });
+    });
   }
 
   // ---------- 数据备份：导出/导入 JSON（纯本地数据，换机前先导出） ----------
