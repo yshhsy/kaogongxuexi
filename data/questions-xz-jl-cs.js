@@ -1191,7 +1191,7 @@ window.QUESTIONS_XZ_JL_CS = {
    "id": "xz-va019i",
    "module": "常识判断",
    "source": "2016年吉林省公务员录用考试《行测》题（乙级） · 第18题",
-   "question": "成功就是把“不可能”变成“不！可能”，把“Impossible”变成“I&#39;m possible”。这一说法的合理性在于：",
+   "question": "成功就是把“不可能”变成“不！可能”，把“Impossible”变成“I'm possible”。这一说法的合理性在于：",
    "options": [
     "A. 思维和存在具有同一性",
     "B. 实践具有直接现实性",
@@ -1199,7 +1199,7 @@ window.QUESTIONS_XZ_JL_CS = {
     "D. 意识具有主动创造性"
    ],
    "answer": "B",
-   "analysis": "B项正确：把“不可能”变成“不！可能”，把“Impossible”变成“I&#39;m possible”需要通过实践去实现。实践的直接现实性是指实践是一种直接现实性活动，它可以把人们头脑中的观念的存在变为现实的存在，符合题干的表述。\n故正确答案为B。",
+   "analysis": "B项正确：把“不可能”变成“不！可能”，把“Impossible”变成“I'm possible”需要通过实践去实现。实践的直接现实性是指实践是一种直接现实性活动，它可以把人们头脑中的观念的存在变为现实的存在，符合题干的表述。\n故正确答案为B。",
    "exam": "jilin",
    "year": 2016
   },

@@ -1311,7 +1311,7 @@ window.QUESTIONS_XZ_TJ_SL = {
     "D. 13分米"
    ],
    "answer": "C",
-   "analysis": "本题要求表面的最短路径，可考虑两种方式。第一种可在A点沿着外壁直上直下爬入桶内部，由于不考虑桶厚度，所以壁虎依然在A点位置，此时走了img/formula-b987381957219e88.webp分米，接下来壁虎只需沿直径从A爬到B即可，即又走了img/formula-3f2522560d6e0039.webp分米，此时从A到B共爬了img/formula-8968faa6859c5fdb.webp分米。\n第二种可将图形进行展开，如图所示。原图中AB为直径，则在展开图中AB的距离img/formula-b2cce8531296f0da.webp底面周长img/formula-43ecc57ee2c6e634.webp分米，img/formula-960ba83bdd8a1efe.webp分米。所求为img/formula-608ac6cd0cf83edc.webp最小值，延长AD，使img/formula-d1da7ca47e229a25.webp，则img/formula-219432f4fdfb5f44.webpimg/formula-909b076089ffdbd4.webp，在直角三角形A&#39;AB中，img/formula-be0c853f740b77e4.webp分米，img/formula-cb502e0c18799f64.webpimg/formula-b346b7af24a8fb1b.webp分米，根据勾股定理img/formula-10c934f44dea6389.webpimg/formula-e57170f27790ffbf.webp分米。\nimg/17873452c43beb5.webp\n综上，第一种的距离更短，为12.64分米。\n故正确答案为C。",
+   "analysis": "本题要求表面的最短路径，可考虑两种方式。第一种可在A点沿着外壁直上直下爬入桶内部，由于不考虑桶厚度，所以壁虎依然在A点位置，此时走了img/formula-b987381957219e88.webp分米，接下来壁虎只需沿直径从A爬到B即可，即又走了img/formula-3f2522560d6e0039.webp分米，此时从A到B共爬了img/formula-8968faa6859c5fdb.webp分米。\n第二种可将图形进行展开，如图所示。原图中AB为直径，则在展开图中AB的距离img/formula-b2cce8531296f0da.webp底面周长img/formula-43ecc57ee2c6e634.webp分米，img/formula-960ba83bdd8a1efe.webp分米。所求为img/formula-608ac6cd0cf83edc.webp最小值，延长AD，使img/formula-d1da7ca47e229a25.webp，则img/formula-219432f4fdfb5f44.webpimg/formula-909b076089ffdbd4.webp，在直角三角形A'AB中，img/formula-be0c853f740b77e4.webp分米，img/formula-cb502e0c18799f64.webpimg/formula-b346b7af24a8fb1b.webp分米，根据勾股定理img/formula-10c934f44dea6389.webpimg/formula-e57170f27790ffbf.webp分米。\nimg/17873452c43beb5.webp\n综上，第一种的距离更短，为12.64分米。\n故正确答案为C。",
    "exam": "tianjin",
    "year": 2021
   },

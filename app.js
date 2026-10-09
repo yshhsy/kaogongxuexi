@@ -587,7 +587,9 @@
       if (text) {
         var tx = document.createElement("span");
         tx.className = "opt-text";
-        setRichText(tx, blankify(text));
+        // 部分题库数据选项自带 "A. " 编号前缀（约1.9万处），徽章已展示字母，此处剥离避免双重编号
+        var clean = text.replace(/^\s*[A-H][.、．:：]\s*/, "");
+        setRichText(tx, blankify(clean));
         body.appendChild(tx);
       }
       btn.addEventListener("click", function () { selectOption(i); });
